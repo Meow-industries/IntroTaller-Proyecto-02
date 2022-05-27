@@ -55,14 +55,13 @@ class MainMenu(tk.Frame):
         """Widget calling"""
         self.__setupCanvas()
         self.__setupBackground()
-        self.__setupLabel()
         self.__setupButtons()
         self.__setupMusic()
     
     def __setupCanvas(self):
         """Canvas configuration"""
-        self.__menuCanva = tk.Canvas(self, width= 1024, height= 500, borderwidth=0)
-
+        self.__menuCanva = tk.Canvas(self, width= 800, height= 600, borderwidth=0)
+        self.__menuCanva.place(x=0, y=0)
     def __setupBackground(self):
         """Background configuration"""
 
@@ -83,15 +82,18 @@ class MainMenu(tk.Frame):
         #Import Soundtrack
         pygame.mixer.music.load("sound/menuTrack.mp3")
         pygame.mixer.music.play(loops=-1) #Play the song while the user is in MainMenu
-    
-    def __setupLabel(self):
-        """Tittle label setup"""
-        tittleLabel = tk.Label(self.__menuCanva, text="BATTLESHIP", font=("Arial Black", 55), anchor="center", bg="White")
-        tittleLabel.place(x=100, y=80)
-    
+
     def __setupButtons(self):
         """Buttons setup"""
+        playBtn = tk.Button(self.__menuCanva, text = "Play")
+        playBtn.config(width=30, height=3)
+        playBtn.place(x=300, y=400)
 
+    def __setupEntry(self):
+        """Entry setup"""
+        self.__userNameInput = tk.StringVar()
+        self.__userNameInput.set("")
+        #voy por aqui, falta poner el input como tal
 class GameScreen(tk.Frame):
     """creating the animation & fibonacci screen"""
     def __init__(self, parent, controller): #constructor
