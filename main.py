@@ -48,20 +48,20 @@ class GraphicUserInterface(tk.Tk):
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller): #constructor
         tk.Frame.__init__(self, parent) #constructor
-        self.__initComponents()
-    
-    def __initComponents(self,):
+        self.__initComponents(controller)
+
+    def __initComponents(self, controller):
         """Widget calling"""
         self.__setupCanvas()
         self.__setupBackground()
         self.__setupMusic()
         self.__setupEntry()
-        self.__setupButton()
-
-    def __setupButton(self):
-        playButton = tk.Button(self, text="Play", command= lambda : controller.show_frame(GameScreen))
+        self.__setupButton(controller)
+        
+    def __setupButton(self,controller):
+        """Play Button configuration"""
+        playButton = tk.Button(self, text="Play", command= lambda : controller.showFrame(GameScreen))
         playButton.place(x=10, y=10)
-    
     def __setupCanvas(self):
         """Canvas configuration"""
         self.__menuCanva = tk.Canvas(self, width= 800, height= 600, borderwidth=0)
