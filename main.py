@@ -10,6 +10,8 @@ class GraphicUserInterface(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)# constructor 
          
         self.__configureWindow() 
+        self.__topMenu()
+        
         # creating a container
         self.__container = tk.Frame(self) 
         self.__container.pack(side = "top", fill = "both", expand = True)
@@ -44,7 +46,24 @@ class GraphicUserInterface(tk.Tk):
         self.geometry("800x600+300+60")
         self.iconbitmap('media/icon.ico') #TODO: Revisar compatibilidad con mac
         self.resizable(False, False)
-        
+    
+    def __topMenu(self):  
+        """top menu configuration"""
+
+        menubar = tk.Menu(self, foreground='black', activeforeground='black')  
+        file = tk.Menu(menubar, tearoff=1, foreground='black') 
+        file.add_command(label="Fibonacci y Animación")
+        file.add_command(label="Inicio")
+        file.add_separator()  
+        file.add_command(label="Salir", command=self.quit)  
+		
+        menubar.add_cascade(label="Menú", menu=file)  
+        about = tk.Menu(menubar, tearoff=0)  
+        about.add_command(label="Estudiante")  
+        menubar.add_cascade(label="Acerca de", menu=about)  
+
+        self.config(menu=menubar) 
+
 class MainMenu(tk.Frame):
     def __init__(self, parent, controller): #constructor
         tk.Frame.__init__(self, parent) #constructor
