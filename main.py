@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import PhotoImage, GROOVE
-import pygame
+import pygame, copy
+from lib.gameBoards import playerAtPc, pcAtPlayer
 
 class GraphicUserInterface(tk.Tk):
     """Creating the main window"""
@@ -9,17 +10,20 @@ class GraphicUserInterface(tk.Tk):
          
         tk.Tk.__init__(self, *args, **kwargs)# constructor 
          
+        #Widtet calling 
         self.__configureWindow() 
         self.__topMenu()
         self.__setupMusic()
-        
+        self.__setup_papcMatrix()
+        self.__gameSetup = GameSetup()
+
         # creating a container
         self.__container = tk.Frame(self) 
         self.__container.pack(side = "top", fill = "both", expand = True)
         self.__container.grid_rowconfigure(0, weight = 1)
         self.__container.grid_columnconfigure(0, weight = 1)
 
-  
+
         # creating an empty list to add the frames
         self.frames = {} 
   
@@ -40,6 +44,9 @@ class GraphicUserInterface(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
+    def __setup_papcMatrix(self): #Load the attack matrix 
+        self.__gameSetup.getpapcMatrix().loadMatrix(copy.deepcopy(playerAtPc)) #the "copy" is used to create a new object.
+    
     def __configureWindow(self):
         """ Main window configuration """
 
@@ -135,12 +142,7 @@ class MainMenu(tk.Frame):
         nameEntry = tk.Entry(self.__menuCanva, textvariable=self.__userNameInput, font=("Helvetica", 10, "bold" ))
         nameEntry.config(width=30)
         nameEntry.place(x=300, y=300)
-
-    def __motion(self, event): 
-        x, y = event.x, event.y
-        print('{}', '{}'.format(x, y))
         
-
 class GameScreen(tk.Frame):
     """Game Screen"""
     def __init__(self, parent, controller): #constructor
@@ -149,6 +151,7 @@ class GameScreen(tk.Frame):
     
     def __initComponents(self):
         self.__setupCanvas()
+        self.__setupImagesFiles()
 
     def __setupCanvas(self):
         """Canvas configuration"""
@@ -159,12 +162,52 @@ class GameScreen(tk.Frame):
         self.__gameCanvas = tk.Canvas(self, width=384, height=384) 
         self.__gameCanvas.place(x=385, y=0)
 
-class playerAttackCompu(object):
+    def __setupImagesFiles(self):
+        self.__planeUp = PhotoImage(file="media/planeUp.jpg")
+        self.__planeDown = PhotoImage(file="media/planeDown.jpg")
+        self.__planeLeft = PhotoImage(file="media/planeLeft.jpg")
+        self.__planeRight = PhotoImage(file="media/planeRight.jpg")
+        self.__waterBlock = PhotoImage(file="media/waterBlock.jpg")
+        self.__woodBlock = PhotoImage(file="media/woodBlock.png")
+
+    def __getImage(self, id): # funcion para obtener la imagen deseada dependiendo de su ID
+        if id == 7 :
+            return self.__woodBlock
+        elif id == 0:
+            return self.__waterBlock
+        elif id == 4.1:
+            return self.__planeUp
+        elif id == 4.2:
+            return self.__planeDown
+        elif id == 4.3:
+            return self.__planeRight
+        elif id == 4.4:
+            return self.__planeLeft
+            
+class playerAttackPcMatrix(object):
     __instance = None
 
     def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia de la matriz
         if cls.__instance is None:
-            cls.__instance = super(playerAttackCompu, cls).__new__(cls)
+            cls.__instance = super(playerAttackPcMatrix, cls).__new__(cls)
             cls.__matrix = []
         return cls.__instance
-    
+
+    def loadMatrix(cls, papcMatrix): # cargando la matriz 
+        cls.__matrix = papcMatrix
+
+    def getMatrix(cls): # funcion que devulve la matriz
+        return cls.__matrix
+
+    def updatePosition(cls, pOld, pNew,oldID, newID): # funcion que actualiza la matriz a nivel logico
+        cls.__matrix[pOld[0]][pOld[1]] = oldID 
+        cls.__matrix[pNew[0]][pNew[1]] = newID 
+        return (pOld, oldID), (pNew, newID)
+
+class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
+    def __init__(self): #constructor
+        self.__papcMatrix = playerAttackPc()
+
+    def getpapcMatrix(self): #funcion que sirve de medio para acceder a la clase Matrix()
+        return self.__papcMatrix
+
