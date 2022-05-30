@@ -11,6 +11,7 @@ class GraphicUserInterface(tk.Tk):
          
         self.__configureWindow() 
         self.__topMenu()
+        self.__setupMusic()
         
         # creating a container
         self.__container = tk.Frame(self) 
@@ -43,25 +44,56 @@ class GraphicUserInterface(tk.Tk):
         """ Main window configuration """
 
         self.title("BATTLESHIP")
-        self.geometry("800x600+300+60")
+        self.geometry("773x409+300+60")
         self.iconbitmap('media/icon.ico') #TODO: Revisar compatibilidad con mac
         self.resizable(False, False)
+
+    def __setupMusic(self):
+        """Music setup"""
+
+        #Starting pygame
+        pygame.mixer.init()
+
+        #Import Soundtrack
+        pygame.mixer.music.load("sound/menuTrack.mp3")
+        pygame.mixer.music.play(loops=-1) #Play the song while the user is in MainMenu
     
+
+    def __setupPause(self):
+        """Funtion to pause the music"""
+
+        pygame.mixer.music.pause() #Pause the song 
+
+    def __setupPlay(self):
+        """Function to resume the music"""
+
+        pygame.mixer.music.play() #Play the song 
+        
     def __topMenu(self):  
         """top menu configuration"""
 
         menubar = tk.Menu(self, foreground='black', activeforeground='black')  
         file = tk.Menu(menubar, tearoff=1, foreground='black') 
-        file.add_command(label="Fibonacci y Animación")
-        file.add_command(label="Inicio")
+        file.add_command(label="About Developers")
+        file.add_command(label="Read Tutorial!")
         file.add_separator()  
         file.add_command(label="Salir", command=self.quit)  
-		
-        menubar.add_cascade(label="Menú", menu=file)  
+        menubar.add_cascade(label="Help", menu=file)  
+        
         about = tk.Menu(menubar, tearoff=0)  
-        about.add_command(label="Estudiante")  
-        menubar.add_cascade(label="Acerca de", menu=about)  
+        about.add_command(label="Save")  
+        about.add_command(label="Load") 
+        menubar.add_cascade(label="Game", menu=about) 
+        
+        hallOfFame = tk.Menu(menubar, tearoff=0)  
+        hallOfFame.add_command(label="Go!") 
+        menubar.add_cascade(label="Hall Of Fame", menu=hallOfFame) 
 
+        music = tk.Menu(menubar, tearoff=0)
+        music.add_command(label="Play", command = self.__setupPlay)  
+        music.add_command(label="Mute", command= self.__setupPause)  
+        menubar.add_cascade(label="Music", menu=music)
+        
         self.config(menu=menubar) 
 
 class MainMenu(tk.Frame):
@@ -73,19 +105,19 @@ class MainMenu(tk.Frame):
         """Widget calling"""
         self.__setupCanvas()
         self.__setupBackground()
-        self.__setupMusic()
         self.__setupEntry()
         self.__setupButton(controller)
-        
+
     def __setupButton(self,controller):
         """Play Button configuration"""
         playButton = tk.Button(self, text="Play", command= lambda : controller.showFrame(GameScreen))
         playButton.place(x=10, y=10)
+
+
     def __setupCanvas(self):
         """Canvas configuration"""
-        self.__menuCanva = tk.Canvas(self, width= 800, height= 600, borderwidth=0)
+        self.__menuCanva = tk.Canvas(self, width=800, height=600, borderwidth=0)
         self.__menuCanva.place(x=0, y=0)
-
 
     def __setupBackground(self):
         """Background configuration"""
@@ -96,16 +128,6 @@ class MainMenu(tk.Frame):
         bgLabel = tk.Label(self.__menuCanva, image = bgImg)
         bgLabel.place(x=0, y=0)
 
-    def __setupMusic(self):
-        """Music setup"""
-
-        #Starting pygame
-        pygame.mixer.init()
-
-        #Import Soundtrack
-        pygame.mixer.music.load("sound/menuTrack.mp3")
-        pygame.mixer.music.play(loops=-1) #Play the song while the user is in MainMenu
-
     def __setupEntry(self):
         """Entry setup"""
         self.__userNameInput = tk.StringVar()
@@ -113,6 +135,11 @@ class MainMenu(tk.Frame):
         nameEntry = tk.Entry(self.__menuCanva, textvariable=self.__userNameInput, font=("Helvetica", 10, "bold" ))
         nameEntry.config(width=30)
         nameEntry.place(x=300, y=300)
+
+    def __motion(self, event): 
+        x, y = event.x, event.y
+        print('{}', '{}'.format(x, y))
+        
 
 class GameScreen(tk.Frame):
     """Game Screen"""
@@ -126,8 +153,18 @@ class GameScreen(tk.Frame):
     def __setupCanvas(self):
         """Canvas configuration"""
 
-        self.__boatsCanvas = tk.Canvas(self, width=372, height=372,bg="Green")
+        self.__boatsCanvas = tk.Canvas(self, width=384, height=384)
         self.__boatsCanvas.place(x=0, y=0)
 
-        self.__gameCanvas = tk.Canvas(self, width=372, height=372, bg="Pink") 
-        self.__gameCanvas.place(x=373, y=0)
+        self.__gameCanvas = tk.Canvas(self, width=384, height=384) 
+        self.__gameCanvas.place(x=385, y=0)
+
+class playerAttackCompu(object):
+    __instance = None
+
+    def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia de la matriz
+        if cls.__instance is None:
+            cls.__instance = super(playerAttackCompu, cls).__new__(cls)
+            cls.__matrix = []
+        return cls.__instance
+    
