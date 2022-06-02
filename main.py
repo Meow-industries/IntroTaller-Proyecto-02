@@ -9,13 +9,14 @@ class GraphicUserInterface(tk.Tk):
     def __init__(self, *args, **kwargs):
          
         tk.Tk.__init__(self, *args, **kwargs)# constructor 
-         
+
+        self.__gameSetup = GameSetup()
         #Widtet calling 
         self.__configureWindow() 
         self.__topMenu()
         self.__setupMusic()
-        self.__setup_papcMatrix()
-        self.__gameSetup = GameSetup()
+        self.__setupPapcMatrix()
+        
 
         # creating a container
         self.__container = tk.Frame(self) 
@@ -44,8 +45,8 @@ class GraphicUserInterface(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def __setup_papcMatrix(self): #Load the attack matrix 
-        self.__gameSetup.getpapcMatrix().loadMatrix(copy.deepcopy(playerAtPc)) #the "copy" is used to create a new object.
+    def __setupPapcMatrix(self): #Load the attack matrix 
+        self.__gameSetup.getPapcMatrix().loadMatrix(copy.deepcopy(playerAtPc)) #the "copy" is used to create a new object.
     
     def __configureWindow(self):
         """ Main window configuration """
@@ -148,7 +149,9 @@ class GameScreen(tk.Frame):
     def __init__(self, parent, controller): #constructor
         tk.Frame.__init__(self, parent) #constructor 
         self.__initComponents()
-    
+        self.__gameSetup = GameSetup()
+        self.__setupImages()
+
     def __initComponents(self):
         self.__setupCanvas()
         self.__setupImagesFiles()
@@ -161,18 +164,23 @@ class GameScreen(tk.Frame):
 
         self.__gameCanvas = tk.Canvas(self, width=384, height=384) 
         self.__gameCanvas.place(x=385, y=0)
-
+    
+    def __updateVisualPapcMatrix(self, oldMovement, newMovement): # funcion que actualiza dos elementos de la matriz dados movimientos
+        tk.Label(self.__gameCanvas, image=self.__getImage(oldMovement[1]), bg="Black").place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
+        tk.Label(self.__gameCanvas, image=self.__getImage(newMovement[1]), bg="Black").place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
+    
     def __setupImagesFiles(self):
-        self.__planeUp = PhotoImage(file="media/planeUp.jpg")
-        self.__planeDown = PhotoImage(file="media/planeDown.jpg")
-        self.__planeLeft = PhotoImage(file="media/planeLeft.jpg")
-        self.__planeRight = PhotoImage(file="media/planeRight.jpg")
-        self.__waterBlock = PhotoImage(file="media/waterBlock.jpg")
-        self.__woodBlock = PhotoImage(file="media/woodBlock.png")
+        self.__planeUp = PhotoImage(file="media/planeUp.png")
+        self.__planeDown = PhotoImage(file="media/planeDown.png")
+        self.__planeLeft = PhotoImage(file="media/planeLeft.png")
+        self.__planeRight = PhotoImage(file="media/planeRight.png")
+        self.__waterBlock = PhotoImage(file="media/waterBlock.png")
+        self.__stoneBlock = PhotoImage(file="media/stoneBlock.png")
+        self.__roadBoat = PhotoImage(file="media/roadBoat.png")
 
     def __getImage(self, id): # funcion para obtener la imagen deseada dependiendo de su ID
         if id == 7 :
-            return self.__woodBlock
+            return self.__stoneBlock
         elif id == 0:
             return self.__waterBlock
         elif id == 4.1:
@@ -183,7 +191,82 @@ class GameScreen(tk.Frame):
             return self.__planeRight
         elif id == 4.4:
             return self.__planeLeft
-            
+        elif id == 9:
+            return self.__roadBoat
+        else:
+            return self.__waterBlock
+
+    def __setupImages(self): # Carga todas las imagenes visualmente
+        
+        matrix = self.__gameSetup.getPapcMatrix().getMatrix()
+
+        for i in range(0,len(matrix)):
+            for j in range(0,len(matrix[0])):
+                tk.Label(self.__gameCanvas, image=self.__getImage(matrix[i][j]), bg="Black").place(x=j*32,y=i*32)
+class ToCheck:
+    def __init__(self):
+        self.__papcMatrix = playerAttackPcMatrix()
+        
+    def checkLimitRight(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 1] == 7
+
+    def checkLimitLeft(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 1] == 7
+
+    def checkLimitDown(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x + 1][self.__y] == 7
+
+    def checkLimitUp(self, pX, pY):
+        self.__x = pX
+        self.__y = pY 
+        return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == 7
+    
+    def checkRightBoat(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 1] == 1
+
+    def checkLeftBoat(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 1] == 1
+
+    def checkDownBoat(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x + 1][self.__y] == 1
+
+    def checkUpBoat(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == 1 
+
+    def checkUpDebris(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == 3
+
+    def checkDownDebris(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x + 1][self.__y] == 3
+
+    def checkLeftDebris(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 1] == 3
+
+    def checkRightDebris(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 1] == 3
+        
 class playerAttackPcMatrix(object):
     __instance = None
 
@@ -204,10 +287,44 @@ class playerAttackPcMatrix(object):
         cls.__matrix[pNew[0]][pNew[1]] = newID 
         return (pOld, oldID), (pNew, newID)
 
+class AtkPlane:
+    def __init__(self): #class constructor
+        self.__x = 6
+        self.__y = 0
+        self.__moves = 0
+        self.__check = ToCheck()
+        self.__papcMatrix = playerAttackPcMatrix()
+    
+    def moveLeft(self):
+        if self.__check.checkLimitUp(self.__x, self.__y) and self.__check.checkLimitDown(self.__x, self.__y):
+            self.__oldID = 7
+
+        elif self.__check.checkUpDebris(self.__x, self.__y) or self.__check.checkDownDebris(self.__x, self.__y):
+            self.__oldID = 3
+
+        elif self.__check.checkLeftDebris(self.__x, self.__y) or self.__check.checkRightDebris(self.__x, self.__y):
+            self.__oldID = 3
+        else:
+            self.__oldID = 0
+
+        oldY = self.__y
+        self.__ID = 4.4
+
+        if not self.__check.checkLimitLeft(self.__x, self.__y):
+            self.__y -= 1
+            return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
+        else:
+            return self.__papcMatrix.updatePosition((self.__x, self.__oldID), (self.__x, self.__oldID), self.__oldID, self.__ID)
+
+
+
+
+
+
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
     def __init__(self): #constructor
-        self.__papcMatrix = playerAttackPc()
-
-    def getpapcMatrix(self): #funcion que sirve de medio para acceder a la clase Matrix()
+        self.__papcMatrix = playerAttackPcMatrix()
+        #self.__atkBoat = 
+    def getPapcMatrix(self): #funcion que sirve de medio para acceder a la clase playerAttackPcMatrix()
         return self.__papcMatrix
 
