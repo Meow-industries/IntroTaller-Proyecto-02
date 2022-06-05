@@ -119,7 +119,7 @@ class MainMenu(tk.Frame):
     def __setupButton(self,controller):
         """Play Button configuration"""
         playButton = tk.Button(self, text="Play", command= lambda : controller.showFrame(GameScreen))
-        playButton.place(x=10, y=10)
+        playButton.place(x=386, y=340)
 
 
     def __setupCanvas(self):
