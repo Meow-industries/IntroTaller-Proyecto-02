@@ -29,7 +29,7 @@ class GraphicUserInterface(tk.Tk):
         self.frames = {} 
   
         # movement through pages 
-        for screenFrame in (MainMenu, GameScreen):
+        for screenFrame in (MainMenu, GameScreen, TutorialScreen):
   
             frame = screenFrame(self.__container, self)
   
@@ -52,7 +52,7 @@ class GraphicUserInterface(tk.Tk):
         """ Main window configuration """
 
         self.title("BATTLESHIP")
-        self.geometry("773x409+300+60")
+        self.geometry("773x409+300+150")
         self.iconbitmap('media/icon.ico') #TODO: Revisar compatibilidad con mac
         self.resizable(False, False)
 
@@ -82,20 +82,21 @@ class GraphicUserInterface(tk.Tk):
 
         menubar = tk.Menu(self, foreground='black', activeforeground='black')  
         file = tk.Menu(menubar, tearoff=1, foreground='black') 
-        file.add_command(label="About Developers")
-        file.add_command(label="Read Tutorial!")
+        file.add_command(label= "About Developers")
+        file.add_command(label= "Read Tutorial!", command= lambda: self.showFrame(TutorialScreen))
+        file.add_command(label= "Main Menu", command= lambda: self.showFrame(MainMenu))
         file.add_separator()  
-        file.add_command(label="Salir", command=self.quit)  
-        menubar.add_cascade(label="Help", menu=file)  
+        file.add_command(label="Salir", command= self.quit)  
+        menubar.add_cascade(label="Help", menu= file)  
         
-        about = tk.Menu(menubar, tearoff=0)  
-        about.add_command(label="Save")  
-        about.add_command(label="Load") 
-        menubar.add_cascade(label="Game", menu=about) 
+        about = tk.Menu(menubar, tearoff= 0)  
+        about.add_command(label= "Save")  
+        about.add_command(label= "Load") 
+        menubar.add_cascade(label= "Game", menu= about) 
         
-        hallOfFame = tk.Menu(menubar, tearoff=0)  
-        hallOfFame.add_command(label="Go!") 
-        menubar.add_cascade(label="Hall Of Fame", menu=hallOfFame) 
+        hallOfFame = tk.Menu(menubar, tearoff= 0)  
+        hallOfFame.add_command(label= "Go!") 
+        menubar.add_cascade(label= "Hall Of Fame", menu= hallOfFame) 
 
         music = tk.Menu(menubar, tearoff=0)
         music.add_command(label="Play", command = self.__setupPlay)  
@@ -115,11 +116,12 @@ class MainMenu(tk.Frame):
         self.__setupBackground()
         self.__setupEntry()
         self.__setupButton(controller)
+        self.__setupLabel()
         
     def __setupButton(self,controller):
         """Play Button configuration"""
-        playButton = tk.Button(self, text="Play", command= lambda : controller.showFrame(GameScreen))
-        playButton.place(x=386, y=340)
+        playButton = tk.Button(self, text="Play", width=30, height=2, command= lambda : controller.showFrame(GameScreen))
+        playButton.place(x=300, y=240)
 
 
     def __setupCanvas(self):
@@ -136,13 +138,17 @@ class MainMenu(tk.Frame):
         bgLabel = tk.Label(self.__menuCanva, image = bgImg)
         bgLabel.place(x=0, y=0)
 
+    def __setupLabel(self):
+        entryLabel = tk.Label(self.__menuCanva, text="Username: ", font=("Helvetica", 10, 'bold'))
+        entryLabel.place(x=250, y=200)       
+
     def __setupEntry(self):
         """Entry setup"""
         self.__userNameInput = tk.StringVar()
-        self.__userNameInput.set("Ingrese su nombre")
+        self.__userNameInput.set("")
         nameEntry = tk.Entry(self.__menuCanva, textvariable=self.__userNameInput, font=("Helvetica", 10, "bold" ))
         nameEntry.config(width=30)
-        nameEntry.place(x=300, y=300)
+        nameEntry.place(x=300, y=200)
         
 class GameScreen(tk.Frame):
     """Game Screen"""
@@ -175,6 +181,7 @@ class GameScreen(tk.Frame):
             self.bind_all('<j>', lambda event: self.__attack(self.__gameSetup.getPlane().attack)) #Ejecutar el "disparo", ademas tiene que cambiar el estado de turno
         else:
             #aqui llamariamos al turno de la compu, cambiaria el estado
+            print("turno rival")
             sleep(1.5)
             
     def __attack(self, pMoveFunction):
@@ -226,6 +233,21 @@ class GameScreen(tk.Frame):
         for i in range(0,len(matrix)):
             for j in range(0,len(matrix[0])):
                 tk.Label(self.__gameCanvas, image=self.__getImage(matrix[i][j]), bg="Black").place(x=j*32,y=i*32)
+
+class TutorialScreen(tk.Frame):
+    def __init__(self, parent, controller): #constructor
+        tk.Frame.__init__(self, parent) #constructor 
+        self.__gameSetup = GameSetup()
+        self.__initComponents()
+        
+    def __initComponents(self):
+        self.__setupCanvas()
+
+    def __setupCanvas(self):
+        self.__tutorialCanvas = tk.Canvas(self, width=384, height=384)
+        self.__tutorialCanvas.place(x=0, y=0)
+
+        
 class ToCheck:
     def __init__(self):
         self.__papcMatrix = playerAttackPcMatrix()
@@ -338,8 +360,8 @@ class AtkPlane:
     def __init__(self): #class constructor
         self.__x = 6
         self.__y = 0
-        self.__moves = 0
-        self.__turn = True
+        self.moves = 0
+        self.turn = True
         self.__check = ToCheck()
         self.__papcMatrix = playerAttackPcMatrix()
 
@@ -347,8 +369,16 @@ class AtkPlane:
         return self.__x, self.__y
         
     def getTurn(self): 
-        return self.__turn
-    
+        return self.turn
+
+    def setupSound(self, fxID):
+        if fxID == 1:
+            pygame.mixer.music.load("sound/explotionSound.mp3")
+            pygame.mixer.music.play(loops=0) 
+        else:
+            pygame.mixer.music.load("sound/missSound.mp3")
+            pygame.mixer.music.play(loops=0) 
+
     def moveLeft(self):
         if self.__check.checkLeftDebris(self.__x, self.__y): 
             self.__oldID = 3
@@ -364,7 +394,6 @@ class AtkPlane:
 
         if not self.__check.checkLimitLeft(self.__x, self.__y):
             self.__y -= 1
-            self.__turn = False
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
@@ -387,7 +416,6 @@ class AtkPlane:
 
         if not self.__check.checkLimitRight(self.__x, self.__y):
             self.__y += 1
-            self.__turn = False
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
@@ -408,7 +436,6 @@ class AtkPlane:
 
         if not self.__check.checkLimitUp(self.__x, self.__y):
             self.__x -= 1
-            self.__turn = False
             return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__papcMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
@@ -429,58 +456,65 @@ class AtkPlane:
 
         if not self.__check.checkLimitDown(self.__x, self.__y):
             self.__x += 1
-            self.__turn = False
             return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__papcMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
     
     def attack(self):
-        self.__moves += 1 #Movement cont
+        self.moves += 1 #Movement cont
         if self.__ID  == 4.1: 
             if self.__check.checkUpBoat(self.__x, self.__y): #Player looks up
-                self.__turn = True
+                self.turn = True
                 newX = self.__x - 1
                 self.__ID = 3
+                self.setupSound(1)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
             else:
-                self.__turn = False
+                self.turn = False
                 newX = self.__x - 1
                 self.__ID = 5
+                self.setupSound(0)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
         elif self.__ID == 4.2:
             if self.__check.checkDownBoat(self.__x, self.__y): #Player looks up
-                self.__turn = True
+                self.turn = True
                 newX = self.__x + 1
                 self.__ID = 3
+                self.setupSound(1)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
             else:
-                self.__turn = False
+                self.turn = False
                 newX = self.__x + 1
                 self.__ID = 5
+                self.setupSound(0)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
         elif self.__ID == 4.3:
             if self.__check.checkRightBoat(self.__x, self.__y): #Player looks up
-                self.__turn = True
+                self.turn = True
                 newY = self.__y + 1
                 self.__ID = 3
+                self.setupSound(1)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
             else:
-                self.__turn = False
+                self.turn = False
                 newY = self.__y + 1
                 self.__ID = 5
+                self.setupSound(0)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
         else:
             if self.__check.checkLeftBoat(self.__x, self.__y): #Player looks up
-                self.__turn = True
+                self.turn = True
                 newY = self.__y - 1
                 self.__ID = 3
+                self.setupSound(1)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
             else:
-                self.__turn = False
+                self.turn = False
                 newY = self.__y - 1
                 self.__ID = 5
+                self.setupSound(0)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
 
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
