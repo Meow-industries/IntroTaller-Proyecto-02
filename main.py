@@ -47,6 +47,7 @@ class GraphicUserInterface(tk.Tk):
 
     def __setupPapcMatrix(self): #Load the attack matrix 
         self.__gameSetup.getPapcMatrix().loadMatrix(copy.deepcopy(playerAtPc)) #the "copy" is used to create a new object.
+        self.__gameSetup.getpcapMatrix().loadMatrix(copy.deepcopy(pcAtPlayer)) #the "copy" is used to create a new object.
     
     def __configureWindow(self):
         """ Main window configuration """
@@ -120,9 +121,8 @@ class MainMenu(tk.Frame):
         
     def __setupButton(self,controller):
         """Play Button configuration"""
-        playButton = tk.Button(self, text="Play", width=30, height=2, command= lambda : controller.showFrame(GameScreen))
-        playButton.place(x=300, y=240)
-
+        playButton = tk.Button(self, text="Play", font=("Helvetica", 15, 'bold'), width=10, command= lambda : controller.showFrame(GameScreen))
+        playButton.place(x=325, y=280)
 
     def __setupCanvas(self):
         """Canvas configuration"""
@@ -140,15 +140,15 @@ class MainMenu(tk.Frame):
 
     def __setupLabel(self):
         entryLabel = tk.Label(self.__menuCanva, text="Username: ", font=("Helvetica", 10, 'bold'))
-        entryLabel.place(x=250, y=200)       
+        entryLabel.place(x=350, y=205)       
 
     def __setupEntry(self):
         """Entry setup"""
         self.__userNameInput = tk.StringVar()
         self.__userNameInput.set("")
         nameEntry = tk.Entry(self.__menuCanva, textvariable=self.__userNameInput, font=("Helvetica", 10, "bold" ))
-        nameEntry.config(width=30)
-        nameEntry.place(x=300, y=200)
+        nameEntry.config(width=25)
+        nameEntry.place(x=300, y=230)
         
 class GameScreen(tk.Frame):
     """Game Screen"""
@@ -160,44 +160,47 @@ class GameScreen(tk.Frame):
     def __initComponents(self):
         self.__setupCanvas()
         self.__setupImagesFiles()
-        self.__setupImages()
+        self.__setupImagespapc()
+        self.__setupImagespcap()
         self.__setupKeyboardInput()
         
     def __setupCanvas(self):
         """Canvas configuration"""
 
-        self.__boatsCanvas = tk.Canvas(self, width=384, height=384)
+        self.__boatsCanvas = tk.Canvas(self, width=384, height=384, bg="blue")
         self.__boatsCanvas.place(x=0, y=0)
 
         self.__gameCanvas = tk.Canvas(self, width=384, height=384) 
         self.__gameCanvas.place(x=385, y=0)
 
     def __setupKeyboardInput(self): #Keyboard configuration
-        if self.__gameSetup.getPlane().getTurn():
-            self.bind_all('<d>', lambda event: self.__move(self.__gameSetup.getPlane().moveRight))
-            self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getPlane().moveUp))
-            self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getPlane().moveDown))
-            self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getPlane().moveLeft))
-            self.bind_all('<j>', lambda event: self.__attack(self.__gameSetup.getPlane().attack)) #Ejecutar el "disparo", ademas tiene que cambiar el estado de turno
-        else:
-            #aqui llamariamos al turno de la compu, cambiaria el estado
-            print("turno rival")
-            sleep(1.5)
-            
+        
+        self.bind_all('<d>', lambda event: self.__move(self.__gameSetup.getPlane().moveRight))
+        self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getPlane().moveUp))
+        self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getPlane().moveDown))
+        self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getPlane().moveLeft))
+        self.bind_all('<j>', lambda event: self.__attack(self.__gameSetup.getPlane().attack)) #Ejecutar el "disparo", ademas tiene que cambiar el estado de turno
+
     def __attack(self, pMoveFunction):
         position = pMoveFunction()
         self.__updateVisualPapcMatrixAttack(position)
+       
 
     def __move(self, pMoveFunction):#funcion que realiza el movimiento general del personaje
         movement = pMoveFunction()
         self.__updateVisualPapcMatrix(movement[0], movement[1])
-
+       
+            
     def __updateVisualPapcMatrix(self, oldMovement, newMovement): # funcion que actualiza dos elementos de la matriz dados movimientos
         tk.Label(self.__gameCanvas, image=self.__getImage(oldMovement[1]), bg="Black").place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
         tk.Label(self.__gameCanvas, image=self.__getImage(newMovement[1]), bg="Black").place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
 
     def __updateVisualPapcMatrixAttack(self, position):
-        tk.Label(self.__gameCanvas, image=self.__getImage(position), bg="Black").place(x=position*32,y=position*32)
+        print("[0][1]:", position[0][0])
+        print("[0]:", position[0])
+        print("[1]:", position[1])
+        print("[0][1]:",position[0][1])
+        tk.Label(self.__gameCanvas, image=self.__getImage(position[1]), bg="Black").place(x=position[0][1]*32,y=position[0][0]*32)
      
     def __setupImagesFiles(self):
         self.__planeUp = PhotoImage(file="media/planeUp.png")
@@ -207,12 +210,15 @@ class GameScreen(tk.Frame):
         self.__waterBlock = PhotoImage(file="media/waterBlock.png")
         self.__stoneBlock = PhotoImage(file="media/stoneBlock.png")
         self.__missBlock = PhotoImage(file= "media/missBlock.png")
+        self.__debrisBlock = PhotoImage(file= "media/debrisBlock.png")
 
     def __getImage(self, id): # funcion para obtener la imagen deseada dependiendo de su ID
         if id == 7 :
             return self.__stoneBlock
         elif id == 0:
             return self.__waterBlock
+        elif id == 3:
+            return self.__debrisBlock
         elif id == 4.1:
             return self.__planeUp
         elif id == 4.2:
@@ -226,13 +232,22 @@ class GameScreen(tk.Frame):
         else:
             return self.__waterBlock
 
-    def __setupImages(self): # Carga todas las imagenes visualmente
+    def __setupImagespapc(self): # Carga todas las imagenes visualmente
         
-        matrix = self.__gameSetup.getPapcMatrix().getMatrix()
+        matrixpapc = self.__gameSetup.getPapcMatrix().getMatrix()
 
-        for i in range(0,len(matrix)):
-            for j in range(0,len(matrix[0])):
-                tk.Label(self.__gameCanvas, image=self.__getImage(matrix[i][j]), bg="Black").place(x=j*32,y=i*32)
+        for i in range(0,len(matrixpapc)):
+            for j in range(0,len(matrixpapc[0])):
+                tk.Label(self.__gameCanvas, image=self.__getImage(matrixpapc[i][j]), bg="Black").place(x=j*32,y=i*32)
+        
+
+    def __setupImagespcap(self): # Carga todas las imagenes visualmente
+        
+        matrixpcap = self.__gameSetup.getpcapMatrix().getMatrix()
+
+        for i in range(0,len(matrixpcap)):
+            for j in range(0,len(matrixpcap[0])):
+                tk.Label(self.__boatsCanvas, image=self.__getImage(matrixpcap[i][j]), bg="Black").place(x=j*32,y=i*32)
 
 class TutorialScreen(tk.Frame):
     def __init__(self, parent, controller): #constructor
@@ -250,7 +265,7 @@ class TutorialScreen(tk.Frame):
         
 class ToCheck:
     def __init__(self):
-        self.__papcMatrix = playerAttackPcMatrix()
+        self.__papcMatrix = PlayerAttackPcMatrix()
         
     def checkLimitRight(self, pX, pY):
         self.__x = pX
@@ -312,32 +327,32 @@ class ToCheck:
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x][self.__y + 1] == 3
 
-    def checkRightMiss(self, pX, pY):
+    def checkRightMissed(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x][self.__y + 1] == 5
 
-    def checkLeftMiss(self, pX, pY):
+    def checkLeftMissed(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x][self.__y - 1] == 5
 
-    def checkUpMiss(self, pX, pY):
+    def checkUpMissed(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == 5
 
-    def checkDownMiss(self, pX, pY):
+    def checkDownMissed(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x + 1][self.__y] == 5
 
-class playerAttackPcMatrix(object):
+class PlayerAttackPcMatrix(object):
     __instance = None
 
     def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia de la matriz
         if cls.__instance is None:
-            cls.__instance = super(playerAttackPcMatrix, cls).__new__(cls)
+            cls.__instance = super(PlayerAttackPcMatrix, cls).__new__(cls)
             cls.__matrix = []
         return cls.__instance
 
@@ -347,43 +362,55 @@ class playerAttackPcMatrix(object):
     def getMatrix(cls): # funcion que devulve la matriz
         return cls.__matrix
 
-    def updatePosition(cls, pOld, pNew,oldID, newID): #Update the logic matriz when the player moves
+    def updatePosition(cls, pOld, pNew, oldID, newID): #Update the logic matriz when the player moves
         cls.__matrix[pOld[0]][pOld[1]] = oldID 
         cls.__matrix[pNew[0]][pNew[1]] = newID 
         return (pOld, oldID), (pNew, newID)
     
     def updateAttack(cls, pNew, newID): #Update the logic matriz when the player attack
         cls.__matrix[pNew[0]][pNew[1]] = newID
-        return newID
+        print("asdfas",cls.__matrix[pNew[0]][pNew[1]])
+        return pNew, newID
+
+class Turn: # Another singletone to modify and return the "Turn" value
+    __instance = None
+    def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia del turno
+        if cls.__instance is None:
+            cls.__instance = super(Turn, cls).__new__(cls)
+            cls.__turn = True
+        return cls.__instance
+
+    def setTurn(cls, state): # turn modification 
+        cls.__turn = state
+
+    def getTurn(cls): # return the turn value
+        return cls.__turn
 
 class AtkPlane:
     def __init__(self): #class constructor
         self.__x = 6
         self.__y = 0
         self.moves = 0
-        self.turn = True
         self.__check = ToCheck()
-        self.__papcMatrix = playerAttackPcMatrix()
+        self.__papcMatrix = PlayerAttackPcMatrix()
+        self.__turn = Turn()
 
     def getCoords(self):
         return self.__x, self.__y
-        
-    def getTurn(self): 
-        return self.turn
 
-    def setupSound(self, fxID):
+    def setupFxSound(self, fxID):
         if fxID == 1:
-            pygame.mixer.music.load("sound/explotionSound.mp3")
-            pygame.mixer.music.play(loops=0) 
+            __explotionFx = pygame.mixer.Sound("sound/explotionSound.mp3")
+            __explotionFx.play() 
         else:
-            pygame.mixer.music.load("sound/missSound.mp3")
-            pygame.mixer.music.play(loops=0) 
+            __missFx = pygame.mixer.Sound("sound/missSound.mp3")
+            __missFx.play() 
 
     def moveLeft(self):
         if self.__check.checkLeftDebris(self.__x, self.__y): 
             self.__oldID = 3
         
-        elif self.__check.checkLeftMiss(self.__x, self.__y):
+        elif self.__check.checkLeftMissed(self.__x, self.__y):
             self.__oldID = 5
 
         else:
@@ -399,14 +426,13 @@ class AtkPlane:
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
 
     def moveRight(self):
-
         if self.__check.checkLimitUp(self.__x, self.__y) and self.__check.checkLimitDown(self.__x, self.__y):
             self.__oldID = 7
 
         elif self.__check.checkRightDebris(self.__x, self.__y):
             self.__oldID = 3
 
-        elif self.__check.checkRightMiss(self.__x, self.__y):
+        elif self.__check.checkRightMissed(self.__x, self.__y):
             self.__oldID = 5
         else:
             self.__oldID = 0
@@ -425,7 +451,7 @@ class AtkPlane:
         if self.__check.checkUpDebris(self.__x, self.__y):
             self.__oldID = 3
 
-        elif self.__check.checkUpMiss(self.__x, self.__y):
+        elif self.__check.checkUpMissed(self.__x, self.__y):
             self.__oldID = 5
 
         else:
@@ -441,11 +467,10 @@ class AtkPlane:
             return self.__papcMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
 
     def moveDown(self):
-
         if self.__check.checkDownDebris(self.__x, self.__y):
             self.__oldID = 3
 
-        elif self.__check.checkDownMiss(self.__x, self.__y):
+        elif self.__check.checkDownMissed(self.__x, self.__y):
             self.__oldID = 5
 
         else:
@@ -459,69 +484,112 @@ class AtkPlane:
             return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__papcMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
-    
+    def doNothing(self):
+        cont = 0
+        cont += 1
+
     def attack(self):
         self.moves += 1 #Movement cont
-        if self.__ID  == 4.1: 
-            if self.__check.checkUpBoat(self.__x, self.__y): #Player looks up
-                self.turn = True
+        if self.__ID  == 4.1: #Player looks up
+            if self.__check.checkUpMissed(self.__x, self.__y):
+                self.doNothing()
+
+            elif self.__check.checkUpBoat(self.__x, self.__y):  
+                self.__turn.setTurn(True)
                 newX = self.__x - 1
                 self.__ID = 3
-                self.setupSound(1)
+                self.setupFxSound(1)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
+            
             else:
-                self.turn = False
+                self.__turn.setTurn(False)
                 newX = self.__x - 1
                 self.__ID = 5
-                self.setupSound(0)
+                self.setupFxSound(0)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
-        elif self.__ID == 4.2:
-            if self.__check.checkDownBoat(self.__x, self.__y): #Player looks up
-                self.turn = True
+        elif self.__ID == 4.2: #Player looks down
+            if self.__check.checkDownMissed(self.__x, self.__y):
+                self.doNothing()
+
+            elif self.__check.checkDownBoat(self.__x, self.__y): 
+                self.__turn.setTurn(True)
                 newX = self.__x + 1
                 self.__ID = 3
-                self.setupSound(1)
+                self.setupFxSound(1)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
             else:
-                self.turn = False
+                self.__turn.setTurn(False)
                 newX = self.__x + 1
                 self.__ID = 5
-                self.setupSound(0)
+                self.setupFxSound(0)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
         elif self.__ID == 4.3:
-            if self.__check.checkRightBoat(self.__x, self.__y): #Player looks up
-                self.turn = True
+            if self.__check.checkRightMissed(self.__x, self.__y):
+                self.doNothing()
+
+            elif self.__check.checkRightBoat(self.__x, self.__y): #Player looks up
+                self.__turn.setTurn(True)
                 newY = self.__y + 1
                 self.__ID = 3
-                self.setupSound(1)
+                self.setupFxSound(1)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
             else:
-                self.turn = False
+                self.__turn.setTurn(False)
                 newY = self.__y + 1
                 self.__ID = 5
-                self.setupSound(0)
+                self.setupFxSound(0)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
         else:
-            if self.__check.checkLeftBoat(self.__x, self.__y): #Player looks up
-                self.turn = True
+            if self.__check.checkLeftMissed(self.__x, self.__y):
+                self.doNothing()
+
+            elif self.__check.checkLeftBoat(self.__x, self.__y): #Player looks up
+                self.__turn.setTurn(True)
                 newY = self.__y - 1
                 self.__ID = 3
-                self.setupSound(1)
+                self.setupFxSound(1)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
             else:
-                self.turn = False
+                self.__turn.setTurn(False)
                 newY = self.__y - 1
                 self.__ID = 5
-                self.setupSound(0)
+                self.setupFxSound(0)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
+
+class PcAttackPlayerMatrix(object):
+    __instance = None
+
+    def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia de la matriz
+        if cls.__instance is None:
+            cls.__instance = super(PcAttackPlayerMatrix, cls).__new__(cls)
+            cls.__matrix = []
+        return cls.__instance
+
+    def loadMatrix(cls, pcapMatrix): # cargando la matriz 
+        cls.__matrix = pcapMatrix
+
+    def getMatrix(cls): # funcion que devuelve la matriz
+        return cls.__matrix
+
+    def updatePosition(cls, pOld, pNew, oldID, newID): #Update the logic matriz when the player moves
+        cls.__matrix[pOld[0]][pOld[1]] = oldID 
+        cls.__matrix[pNew[0]][pNew[1]] = newID 
+        return (pOld, oldID), (pNew, newID)
+    
+    def updateAttack(cls, pNew, newID): #Update the logic matriz when the player attack
+        cls.__matrix[pNew[0]][pNew[1]] = newID
+        print("asdfas",cls.__matrix[pNew[0]][pNew[1]])
+        return pNew, newID
 
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
     def __init__(self): #constructor
-        self.__papcMatrix = playerAttackPcMatrix()
+        self.__papcMatrix = PlayerAttackPcMatrix()
         self.__atkPlane = AtkPlane()
         self.__check = ToCheck()
+        self.__turn = Turn()
+        self.__pcapMatrix = PcAttackPlayerMatrix() 
 
     def getPapcMatrix(self): #funcion que sirve de medio para acceder a la clase playerAttackPcMatrix()
         return self.__papcMatrix
@@ -531,3 +599,9 @@ class GameSetup: #funcion que sirve de intermediario para no crear un conflicto 
     
     def getCheck(self):
         return self.__check
+
+    def getState(self):
+        return self.__turn
+    
+    def getpcapMatrix(self):
+        return self.__pcapMatrix
