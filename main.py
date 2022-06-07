@@ -17,7 +17,7 @@ class GraphicUserInterface(tk.Tk):
         self.__configureWindow() 
         self.__topMenu()
         self.__setupMusic()
-        self.__setupPapcMatrix()
+        self.__setupMatrix()
 
         # creating a container
         self.__container = tk.Frame(self) 
@@ -45,7 +45,7 @@ class GraphicUserInterface(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-    def __setupPapcMatrix(self): #Load the attack matrix 
+    def __setupMatrix(self): #Load the attack matrix 
         self.__gameSetup.getPapcMatrix().loadMatrix(copy.deepcopy(playerAtPc)) #the "copy" is used to create a new object.
         self.__gameSetup.getpcapMatrix().loadMatrix(copy.deepcopy(pcAtPlayer)) #the "copy" is used to create a new object.
     
@@ -186,7 +186,7 @@ class GameScreen(tk.Frame):
         self.__updateVisualPapcMatrixAttack(position)
        
 
-    def __move(self, pMoveFunction):#funcion que realiza el movimiento general del personaje
+    def __move(self, pMoveFunction): #funcion que realiza el movimiento general del personaje
         movement = pMoveFunction()
         self.__updateVisualPapcMatrix(movement[0], movement[1])
        
@@ -369,7 +369,6 @@ class PlayerAttackPcMatrix(object):
     
     def updateAttack(cls, pNew, newID): #Update the logic matriz when the player attack
         cls.__matrix[pNew[0]][pNew[1]] = newID
-        print("asdfas",cls.__matrix[pNew[0]][pNew[1]])
         return pNew, newID
 
 class Turn: # Another singletone to modify and return the "Turn" value
@@ -391,6 +390,9 @@ class AtkPlane:
         self.__x = 6
         self.__y = 0
         self.moves = 0
+        self.__countX = 0
+        self.__countDebris = 0
+        self.__countBoat = 0
         self.__check = ToCheck()
         self.__papcMatrix = PlayerAttackPcMatrix()
         self.__turn = Turn()
@@ -408,13 +410,30 @@ class AtkPlane:
 
     def moveLeft(self):
         if self.__check.checkLeftDebris(self.__x, self.__y): 
-            self.__oldID = 3
+            if self.__countDebris != 0: 
+                self.__oldID = 3
+            else: 
+                self.__oldID = 0
+                self.__countDebris += 1
         
         elif self.__check.checkLeftMissed(self.__x, self.__y):
-            self.__oldID = 5
+            if self.__countX != 0: 
+                self.__oldID = 5
+            else:
+                self.__oldID = 0
+                self.__countX += 1
 
         else:
-            self.__oldID = 0
+            if self.__countX != 0: 
+                self.__oldID = 5
+                self.__countX = 0
+            
+            elif self.__countDebris != 0: 
+                self.__oldID = 3
+                self.__countDebris = 0
+
+            else: 
+                self.__oldID = 0
 
         oldY = self.__y
         self.__ID = 4.4
@@ -430,12 +449,30 @@ class AtkPlane:
             self.__oldID = 7
 
         elif self.__check.checkRightDebris(self.__x, self.__y):
-            self.__oldID = 3
+            if self.__countDebris != 0: 
+                self.__oldID = 3
+            else: 
+                self.__oldID = 0
+                self.__countDebris += 1
 
         elif self.__check.checkRightMissed(self.__x, self.__y):
-            self.__oldID = 5
+            if self.__countX != 0: 
+                self.__oldID = 5
+            else:
+                self.__oldID = 0
+                self.__countX += 1
+        
         else:
-            self.__oldID = 0
+            if self.__countX != 0: 
+                self.__oldID = 5
+                self.__countX = 0
+            
+            elif self.__countDebris != 0: 
+                self.__oldID = 3
+                self.__countDebris = 0
+
+            else: 
+                self.__oldID = 0
 
         oldY = self.__y
         self.__ID = 4.3
@@ -447,15 +484,31 @@ class AtkPlane:
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
     
     def moveUp(self):
-
         if self.__check.checkUpDebris(self.__x, self.__y):
-            self.__oldID = 3
+            if self.__countDebris != 0: 
+                self.__oldID = 3
+            else: 
+                self.__oldID = 0
+                self.__countDebris += 1
 
         elif self.__check.checkUpMissed(self.__x, self.__y):
-            self.__oldID = 5
+            if self.__countX != 0: 
+                self.__oldID = 5
+            else:
+                self.__oldID = 0
+                self.__countX += 1
 
         else:
-            self.__oldID = 0
+            if self.__countX != 0: 
+                self.__oldID = 5
+                self.__countX = 0
+            
+            elif self.__countDebris != 0: 
+                self.__oldID = 3
+                self.__countDebris = 0
+
+            else: 
+                self.__oldID = 0
 
         oldX = self.__x
         self.__ID = 4.1
@@ -468,13 +521,30 @@ class AtkPlane:
 
     def moveDown(self):
         if self.__check.checkDownDebris(self.__x, self.__y):
-            self.__oldID = 3
+            if self.__countDebris != 0: 
+                self.__oldID = 3
+            else: 
+                self.__oldID = 0
+                self.__countDebris += 1
 
         elif self.__check.checkDownMissed(self.__x, self.__y):
-            self.__oldID = 5
+            if self.__countX != 0: 
+                self.__oldID = 5
+            else: 
+                self.__oldID = 0
+                self.__countX += 1
 
         else:
-            self.__oldID = 0
+            if self.__countX != 0: 
+                self.__oldID = 5
+                self.__countX = 0
+            
+            elif self.__countDebris != 0: 
+                self.__oldID = 3
+                self.__countDebris = 0
+
+            else: 
+                self.__oldID = 0
 
         oldX = self.__x
         self.__ID = 4.2
@@ -484,13 +554,15 @@ class AtkPlane:
             return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__papcMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
+    
     def doNothing(self):
         cont = 0
         cont += 1
 
     def attack(self):
         self.moves += 1 #Movement cont
-        if self.__ID  == 4.1: #Player looks up
+        
+        if self.__ID == 4.1: #Player looks up
             if self.__check.checkUpMissed(self.__x, self.__y):
                 self.doNothing()
 
@@ -508,7 +580,7 @@ class AtkPlane:
                 self.setupFxSound(0)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
-        elif self.__ID == 4.2: #Player looks down
+        if self.__ID == 4.2: #Player looks down
             if self.__check.checkDownMissed(self.__x, self.__y):
                 self.doNothing()
 
@@ -525,7 +597,7 @@ class AtkPlane:
                 self.setupFxSound(0)
                 return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
-        elif self.__ID == 4.3:
+        if self.__ID == 4.3:
             if self.__check.checkRightMissed(self.__x, self.__y):
                 self.doNothing()
 
@@ -541,7 +613,8 @@ class AtkPlane:
                 self.__ID = 5
                 self.setupFxSound(0)
                 return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
-        else:
+        
+        if self.__ID == 4.4:
             if self.__check.checkLeftMissed(self.__x, self.__y):
                 self.doNothing()
 
@@ -580,7 +653,6 @@ class PcAttackPlayerMatrix(object):
     
     def updateAttack(cls, pNew, newID): #Update the logic matriz when the player attack
         cls.__matrix[pNew[0]][pNew[1]] = newID
-        print("asdfas",cls.__matrix[pNew[0]][pNew[1]])
         return pNew, newID
 
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
