@@ -33,7 +33,7 @@ class GraphicUserInterface(tk.Tk):
         self.frames = {} 
   
         # movement through pages 
-        for screenFrame in (MainMenu, setupBoatScreen,GameScreen, TutorialScreen):
+        for screenFrame in (MainMenu, setupBoatScreen, GameScreen, TutorialScreen):
   
             frame = screenFrame(self.__container, self)
   
@@ -177,15 +177,15 @@ class setupBoatScreen(tk.Frame):
         self.__countBoatCanvas.place(x=323, y=0)
 
     def __setupLabel(self): 
-        self.__boat = tk.Label(self.__countBoatCanvas, text='Bote 1', font=(HELVETICA, 14), bg=BLACK)
-        self.__boat.place(x=0, y=0)
+        self.__boat = tk.Label(self.__countBoatCanvas, text='Bote 1', font=(HELVETICA, 12), bg=BLACK, fg='white')
+        self.__boat.place(x=5, y=5)
 
     def __setupKeyboardInput(self): #Keyboard configuration
         self.bind_all('<Right>', lambda event: self.__move(self.__gameSetup.getArrow().moveRight))
-        self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getArrow().moveUp))
-        self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getArrow().moveDown))
-        self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getArrow().moveLeft))
-        self.bind_all('<j>', lambda event: self.__placeBoat(self.__gameSetup.getPlane().attack)) #place boat
+        self.bind_all('<Up>', lambda event: self.__move(self.__gameSetup.getArrow().moveUp))
+        self.bind_all('<Down>', lambda event: self.__move(self.__gameSetup.getArrow().moveDown))
+        self.bind_all('<Left>', lambda event: self.__move(self.__gameSetup.getArrow().moveLeft))
+        self.bind_all('<k>', lambda event: self.__placeBoat(self.__gameSetup.getPlane().attack)) #place boat
 
     def __move(self, pMoveFunction): 
         movement = pMoveFunction()
@@ -193,13 +193,13 @@ class setupBoatScreen(tk.Frame):
 
     def __placeBoat(self, pMoveFunction):#TODO: hay que cambiar la logica de esta parte
         position = pMoveFunction()
-        self.__updateVisualPcapMatrix(position)
+        self.__updateVisualPcapMatrixPlaceBoat(position)
     
     def __updateVisualPcapMatrix(self, oldMovement, newMovement): 
         tk.Label(self.__setupCanvas, image=self.__getImage(oldMovement[1]), bg=BLACK).place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
         tk.Label(self.__setupCanvas, image=self.__getImage(newMovement[1]), bg=BLACK).place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
     
-    def __updateVisualPcapMatrix(self, position):
+    def __updateVisualPcapMatrixPlaceBoat(self, position):
         tk.Label(self.__setupCanvas, image=self.__getImage(position[1]), bg=BLACK).place(x=position[0][1]*32,y=position[0][0]*32)
        
     def __setupImagesFiles(self):
@@ -521,11 +521,15 @@ class Turn: # Another singletone to modify and return the "Turn" value
     def getTurn(cls): # return the turn value
         return cls.__turn
 
-class Arrow:#TODO:
+class Arrow: #TODO:
     def __init__(self):
         self.__x = 6
         self.__y = 0
         #self.__countBoat = 0
+        self.__RIGHT = False
+        self.__LEFT = False
+        self.__UP = False
+        self.__DOWN = False
         self.__check = ToCheck()
         self.__pcapMatrix = PcAttackPlayerMatrix()
     
@@ -543,18 +547,24 @@ class Arrow:#TODO:
 
         oldY = self.__y
         self.__ID = 9.4
-        print("test")
+
         if not self.__check.checkLimitLeft(self.__x, self.__y):
+            self.__LEFT = True
+            self.__DOWN, self.__UP, self.__RIGHT = False, False, False
+            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
+
             self.__y -= 1
             return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
 
     def moveRight(self):
-        if self.__check.checkVerBoatsRight(self.__x, self.__y):
-                self.__oldID = 1.1
+        if self.__check.checkLimitUp(self.__x, self.__y) and self.__check.checkLimitDown(self.__x, self.__y):
+            self.__oldID = 7
+        elif self.__check.checkVerBoatsRight(self.__x, self.__y):
+            self.__oldID = 1.1
         elif self.__check.checkHorBoatsRight(self.__x, self.__y):
-                self.__oldID = 1.2
+            self.__oldID = 1.2
         else: 
             self.__oldID = 0
 
@@ -562,6 +572,10 @@ class Arrow:#TODO:
         self.__ID = 9.3
 
         if not self.__check.checkLimitRight(self.__x, self.__y):
+            self.__RIGHT = True
+            self.__DOWN, self.__UP, self.__LEFT = False, False, False
+            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
+
             self.__y += 1
             return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -579,6 +593,10 @@ class Arrow:#TODO:
         self.__ID = 9.1
 
         if not self.__check.checkLimitUp(self.__x, self.__y):
+            self.__UP = True
+            self.__DOWN, self.__RIGHT, self.__LEFT = False, False, False
+            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
+
             self.__x -= 1
             return self.__pcapMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -596,11 +614,23 @@ class Arrow:#TODO:
         self.__ID = 9.2
 
         if not self.__check.checkLimitDown(self.__x, self.__y):
+            self.__DOWN = True
+            self.__UP, self.__RIGHT, self.__LEFT = False, False, False
+            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
+
             self.__x += 1
             return self.__pcapMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__pcapMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
-            
+        
+
+    def setBoat(self): 
+        if self.__UP or self.__DOWN: 
+            pass
+        else: 
+            pass
+    
+
 class AtkPlane:
     def __init__(self): #class constructor
         self.__x = 6
