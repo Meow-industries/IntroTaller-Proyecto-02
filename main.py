@@ -122,7 +122,7 @@ class MainMenu(tk.Frame):
         
     def __setupButton(self,controller):
         """Play Button configuration"""
-        playButton = tk.Button(self, text="Play", font=(HELVETICA, 15, 'bold'), width=10, command= lambda : controller.showFrame(GameScreen))
+        playButton = tk.Button(self, text="Play", font=(HELVETICA, 15, 'bold'), width=10, command= lambda : controller.showFrame(setupBoatScreen))
         playButton.place(x=325, y=280)
 
     def __setupCanvas(self):
@@ -181,24 +181,24 @@ class setupBoatScreen(tk.Frame):
         self.__boat.place(x=0, y=0)
 
     def __setupKeyboardInput(self): #Keyboard configuration
-        self.bind_all('<d>', lambda event: self.__move(self.__gameSetup.getPlane().moveRight))
-        self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getPlane().moveUp))
-        self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getPlane().moveDown))
-        self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getPlane().moveLeft))
+        self.bind_all('<Right>', lambda event: self.__move(self.__gameSetup.getArrow().moveRight))
+        self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getArrow().moveUp))
+        self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getArrow().moveDown))
+        self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getArrow().moveLeft))
         self.bind_all('<j>', lambda event: self.__placeBoat(self.__gameSetup.getPlane().attack)) #place boat
-    
+
     def __move(self, pMoveFunction): 
         movement = pMoveFunction()
-        self.__updateVisualPapcMatrix(movement[0], movement[1])
+        self.__updateVisualPcapMatrix(movement[0], movement[1])
 
     def __placeBoat(self, pMoveFunction):#TODO: hay que cambiar la logica de esta parte
         position = pMoveFunction()
         self.__updateVisualPcapMatrix(position)
-        
-    def __updateVisualPapcMatrix(self, oldMovement, newMovement): 
+    
+    def __updateVisualPcapMatrix(self, oldMovement, newMovement): 
         tk.Label(self.__setupCanvas, image=self.__getImage(oldMovement[1]), bg=BLACK).place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
         tk.Label(self.__setupCanvas, image=self.__getImage(newMovement[1]), bg=BLACK).place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
- 
+    
     def __updateVisualPcapMatrix(self, position):
         tk.Label(self.__setupCanvas, image=self.__getImage(position[1]), bg=BLACK).place(x=position[0][1]*32,y=position[0][0]*32)
        
@@ -209,7 +209,6 @@ class setupBoatScreen(tk.Frame):
         self.__arrowLeft = PhotoImage(file= "media/arrowLeft.png")
         self.__waterBlock = PhotoImage(file= "media/waterBlock.png")
         self.__stoneBlock = PhotoImage(file= "media/stoneBlock.png")
-        #self.__playerBoat = PhotoImage(file = "media/roadBoat.png")
         
     def __getImage(self, id):
         if id == 9.1:
@@ -299,7 +298,7 @@ class GameScreen(tk.Frame):
         self.__stoneBlock = PhotoImage(file= "media/stoneBlock.png")
         self.__missBlock = PhotoImage(file= "media/missBlock.png")
         self.__debrisBlock = PhotoImage(file= "media/debrisBlock.png")
-        self.__playerBoat = PhotoImage(file = "media/roadBoat1.png")
+        self.__playerBoat = PhotoImage(file = "media/roadBoatHor.png")
     
     def __getImage(self, id): # funcion para obtener la imagen deseada dependiendo de su ID
         if id == 7 :
@@ -443,12 +442,46 @@ class ToCheck:
                 self.__estado = True
                 break
         return self.__estado
-        
-    def checkBoats(self, pX, pY):
+    
+    def checkHorBoatsLeft(self, pX, pY):#TODO:
         self.__x = pX
         self.__y = pY
-        self.__boats = [6.1, 6.2, 6.3, 6.4, 6.5, 6.6]
-        self.__coord = self.__pcapMatrix.getMatrix()[self.__x][self.__y]
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 1] == 1.2
+    
+    def checkVerBoatsLeft(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 1] == 1.1
+
+    def checkHorBoatsRight(self, pX, pY):#TODO:
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 1] == 1.2
+    
+    def checkVerBoatsRight(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 1] == 1.1
+
+    def checkHorBoatsUp(self, pX, pY):#TODO:
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] == 1.2
+    
+    def checkVerBoatsUp(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] == 1.1
+    
+    def checkHorBoatsDown(self, pX, pY):#TODO:
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] == 1.2
+    
+    def checkVerBoatsDown(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] == 1.1
 
 class PlayerAttackPcMatrix(object):
     __instance = None
@@ -488,148 +521,85 @@ class Turn: # Another singletone to modify and return the "Turn" value
     def getTurn(cls): # return the turn value
         return cls.__turn
 
-class Arrow:
+class Arrow:#TODO:
     def __init__(self):
         self.__x = 6
         self.__y = 0
-        self.__countBoat = 0
+        #self.__countBoat = 0
         self.__check = ToCheck()
-        self.__papcMatrix = PlayerAttackPcMatrix()
+        self.__pcapMatrix = PcAttackPlayerMatrix()
     
     def setupFxSound(self):
         __constructionFx = pygame.mixer.Sound("sound/contructionSound.mp3")
         __constructionFx.play() 
     
     def moveLeft(self):
-        if self.__check.checkLeftDebris(self.__x, self.__y): 
-            if self.__countDebris != 0: 
-                self.__oldID = 3
-            else: 
-                self.__oldID = 0
-                self.__countDebris += 1
-        
+        if self.__check.checkVerBoatsLeft(self.__x, self.__y):
+                self.__oldID = 1.1
+        elif self.__check.checkHorBoatsLeft(self.__x, self.__y):
+                self.__oldID = 1.2
         else: 
             self.__oldID = 0
 
         oldY = self.__y
-        self.__ID = 4.4
-
+        self.__ID = 9.4
+        print("test")
         if not self.__check.checkLimitLeft(self.__x, self.__y):
             self.__y -= 1
-            return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
-            return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
 
     def moveRight(self):
-        if self.__check.checkLimitUp(self.__x, self.__y) and self.__check.checkLimitDown(self.__x, self.__y):
-            self.__oldID = 7
-
-        elif self.__check.checkRightDebris(self.__x, self.__y):
-            if self.__countDebris != 0: 
-                self.__oldID = 3
-            else: 
-                self.__oldID = 0
-                self.__countDebris += 1
-
-        elif self.__check.checkRightMissed(self.__x, self.__y):
-            if self.__countX != 0: 
-                self.__oldID = 5
-            else:
-                self.__oldID = 0
-                self.__countX += 1
-        
-        else:
-            if self.__countX != 0: 
-                self.__oldID = 5
-                self.__countX = 0
-            
-            elif self.__countDebris != 0: 
-                self.__oldID = 3
-                self.__countDebris = 0
-
-            else: 
-                self.__oldID = 0
+        if self.__check.checkVerBoatsRight(self.__x, self.__y):
+                self.__oldID = 1.1
+        elif self.__check.checkHorBoatsRight(self.__x, self.__y):
+                self.__oldID = 1.2
+        else: 
+            self.__oldID = 0
 
         oldY = self.__y
-        self.__ID = 4.3
+        self.__ID = 9.3
 
         if not self.__check.checkLimitRight(self.__x, self.__y):
             self.__y += 1
-            return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
-            return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
     
     def moveUp(self):
-        if self.__check.checkUpDebris(self.__x, self.__y):
-            if self.__countDebris != 0: 
-                self.__oldID = 3
-            else: 
-                self.__oldID = 0
-                self.__countDebris += 1
-
-        elif self.__check.checkUpMissed(self.__x, self.__y):
-            if self.__countX != 0: 
-                self.__oldID = 5
-            else:
-                self.__oldID = 0
-                self.__countX += 1
-
-        else:
-            if self.__countX != 0: 
-                self.__oldID = 5
-                self.__countX = 0
-            
-            elif self.__countDebris != 0: 
-                self.__oldID = 3
-                self.__countDebris = 0
-
-            else: 
-                self.__oldID = 0
+        if self.__check.checkVerBoatsUp(self.__x, self.__y):
+                self.__oldID = 1.1
+        elif self.__check.checkHorBoatsUp(self.__x, self.__y):
+                self.__oldID = 1.2
+        else: 
+            self.__oldID = 0
 
         oldX = self.__x
-        self.__ID = 4.1
+        self.__ID = 9.1
 
         if not self.__check.checkLimitUp(self.__x, self.__y):
             self.__x -= 1
-            return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
-            return self.__papcMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
 
     def moveDown(self):
-        if self.__check.checkDownDebris(self.__x, self.__y):
-            if self.__countDebris != 0: 
-                self.__oldID = 3
-            else: 
-                self.__oldID = 0
-                self.__countDebris += 1
-
-        elif self.__check.checkDownMissed(self.__x, self.__y):
-            if self.__countX != 0: 
-                self.__oldID = 5
-            else: 
-                self.__oldID = 0
-                self.__countX += 1
-
-        else:
-            if self.__countX != 0: 
-                self.__oldID = 5
-                self.__countX = 0
-            
-            elif self.__countDebris != 0: 
-                self.__oldID = 3
-                self.__countDebris = 0
-
-            else: 
-                self.__oldID = 0
+        if self.__check.checkVerBoatsDown(self.__x, self.__y):
+                self.__oldID = 1.1
+        elif self.__check.checkHorBoatsDown(self.__x, self.__y):
+                self.__oldID = 1.2
+        else: 
+            self.__oldID = 0
 
         oldX = self.__x
-        self.__ID = 4.2
+        self.__ID = 9.2
 
         if not self.__check.checkLimitDown(self.__x, self.__y):
             self.__x += 1
-            return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
-            return self.__papcMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
+            return self.__pcapMatrix.updatePosition((oldX, self.__y), (oldX, self.__y), self.__oldID, self.__ID)
             
 class AtkPlane:
     def __init__(self): #class constructor
@@ -680,7 +650,6 @@ class AtkPlane:
 
             else: 
                 self.__oldID = 0
-
         oldY = self.__y
         self.__ID = 4.4
 
@@ -863,7 +832,7 @@ class AtkPlane:
                     self.setupFxSound(0)
                     return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
 
-class PcAttackPlayerMatrix(object):
+class PcAttackPlayerMatrix(object):#TODO:
     __instance = None
 
     def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia de la matriz
@@ -924,13 +893,14 @@ class Computer:
             return self.attack()
 
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
-    def __init__(self): #constructor
+    def __init__(self): #constructor TODO:
         self.__papcMatrix = PlayerAttackPcMatrix()
         self.__atkPlane = AtkPlane()
         self.__check = ToCheck()
         self.__turn = Turn()
         self.__pcapMatrix = PcAttackPlayerMatrix() 
         self.__computerAttack = Computer()
+        self.__arrow = Arrow()
 
     def getPapcMatrix(self): #funcion que sirve de medio para acceder a la clase playerAttackPcMatrix()
         return self.__papcMatrix
@@ -949,3 +919,6 @@ class GameSetup: #funcion que sirve de intermediario para no crear un conflicto 
 
     def getComputer(self):
         return self.__computerAttack
+    
+    def getArrow(self):
+        return self.__arrow
