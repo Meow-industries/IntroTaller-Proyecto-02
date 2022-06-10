@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import PhotoImage
+from tkinter import PhotoImage, messagebox
 import pygame, copy, random
 from lib.gameBoards import playerAtPc, pcAtPlayer
 
@@ -10,13 +10,13 @@ HEIGHT = 384
 HELVETICA = 'Helvetica'
 
 class GraphicUserInterface(tk.Tk):
-    """Creating the main window"""
+    """Principal class"""
      
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):# constructor
          
-        tk.Tk.__init__(self, *args, **kwargs)# constructor 
-        
+        tk.Tk.__init__(self, *args, **kwargs)# constructor
         self.__gameSetup = GameSetup()
+        
         #Widtet calling 
         self.__configureWindow() 
         self.__topMenu()
@@ -29,77 +29,62 @@ class GraphicUserInterface(tk.Tk):
         self.__container.grid_rowconfigure(0, weight = 1)
         self.__container.grid_columnconfigure(0, weight = 1)
 
-        # creating an empty list to add the frames
-        self.frames = {} 
-  
-        # movement through pages 
-        for screenFrame in (MainMenu, setupBoatScreen, GameScreen, TutorialScreen):
-  
-            frame = screenFrame(self.__container, self)
-  
-            """save the frame"""
-            self.frames[screenFrame] = frame
-  
-            frame.grid(row = 0, column = 0, sticky ="nsew")
-    
-        self.showFrame(MainMenu)
+        self.frames = {} # creating an empty list to add the frames
 
-    """showing the frame"""
-    def showFrame(self, cont):
+        for screenFrame in (MainMenu, setupBoatScreen, GameScreen, TutorialScreen): # movement through pages(Frames) 
+            frame = screenFrame(self.__container, self)
+            self.frames[screenFrame] = frame #save the frame
+            frame.grid(row = 0, column = 0, sticky ="nsew")
+        self.showFrame(MainMenu)#First Frame to show
+
+    def showFrame(self, cont): #Method to change the frame
         frame = self.frames[cont]
         frame.tkraise()
 
-    def __setupMatrix(self): #Load the attack matrix 
+    def __setupMatrix(self): #Load each matrix
         self.__gameSetup.getPapcMatrix().loadMatrix(copy.deepcopy(playerAtPc)) #the "copy" is used to create a new object.
         self.__gameSetup.getpcapMatrix().loadMatrix(copy.deepcopy(pcAtPlayer)) #the "copy" is used to create a new object.
     
-    def __configureWindow(self):
-        """ Main window configuration """
-
+    def __configureWindow(self): #Main window Setup
         self.title("BATTLESHIP")
         self.geometry("773x409+300+150")
         self.iconbitmap('media/icon.ico') #TODO: Revisar compatibilidad con mac
         self.resizable(False, False)
 
-    def __setupMusic(self):
-        """Music setup"""
-
-        #Starting pygame
-        pygame.mixer.init()
-        #Import Soundtrack
-        pygame.mixer.music.load("sound/menuTrack.mp3")
-        pygame.mixer.music.play(loops=-1) #Play the song while the user is in MainMenu
+    def __setupMusic(self): #Background music setup
+        pygame.mixer.init()#Starting pygame 
+        pygame.mixer.music.load("sound/menuTrack.mp3")#Import Soundtrack
+        pygame.mixer.music.play(loops=-1) #Play the song while the game is running
            
-
-    def __setupPause(self):
-        """Funtion to pause the music"""
+    def __setupPause(self): #Pause background music
         pygame.mixer.music.pause() #Pause the song 
 
-    def __setupPlay(self):
-        """Function to resume the music"""
+    def __setupPlay(self):#Play background music
         pygame.mixer.music.play() #Play the song 
-        
-    def __topMenu(self):  
-        """top menu configuration"""
+    
+    def __aboutDevelopers(self):#Show developers info
+        messagebox.showinfo('About Developers', ' Made by:\n Yherland Elizondo Cordero - 2022289492\n Kun Kin Zheng Liang - 2022205015')
 
+    def __topMenu(self): #Top menu configuration
+        #help section
         menubar = tk.Menu(self, foreground=BLACK, activeforeground=BLACK)  
         file = tk.Menu(menubar, tearoff=1, foreground=BLACK) 
-        file.add_command(label= "About Developers")
+        file.add_command(label= "About Developers",command = self.__aboutDevelopers)
         file.add_command(label= "Read Tutorial!", command= lambda: self.showFrame(TutorialScreen))
         file.add_command(label= "Main Menu", command= lambda: self.showFrame(MainMenu))
         file.add_separator()  
         file.add_command(label="Salir", command= self.quit)  
         menubar.add_cascade(label="Help", menu= file)  
-        
+        #game section
         about = tk.Menu(menubar, tearoff= 0)  
         about.add_command(label= "Save")  
         about.add_command(label= "Load") 
         menubar.add_cascade(label= "Game", menu= about) 
-        
+        #hall of fame section
         hallOfFame = tk.Menu(menubar, tearoff= 0)  
         hallOfFame.add_command(label= "Go!") 
         menubar.add_cascade(label= "Hall Of Fame", menu= hallOfFame) 
-
+        #music section
         music = tk.Menu(menubar, tearoff=0)
         music.add_command(label="Play", command = self.__setupPlay)  
         music.add_command(label="Mute", command= self.__setupPause)  
@@ -108,42 +93,37 @@ class GraphicUserInterface(tk.Tk):
         self.config(menu=menubar) 
 
 class MainMenu(tk.Frame):
+    """Main menu screen"""
     def __init__(self, parent, controller): #constructor
         tk.Frame.__init__(self, parent) #constructor
-        self.__initComponents(controller)
+        self.__initComponents(controller) #The controller argument it's used to change the frames
 
-    def __initComponents(self, controller):
-        """Widget calling"""
+    def __initComponents(self, controller): #widget calling
         self.__setupCanvas()
         self.__setupBackground()
         self.__setupEntry()
         self.__setupButton(controller)
         self.__setupLabel()
         
-    def __setupButton(self,controller):
-        """Play Button configuration"""
+    def __setupButton(self,controller): # Play button configuration
         playButton = tk.Button(self, text="Play", font=(HELVETICA, 15, 'bold'), width=10, command= lambda : controller.showFrame(setupBoatScreen))
         playButton.place(x=325, y=280)
 
-    def __setupCanvas(self):
-        """Canvas configuration"""
+    def __setupCanvas(self): #Canva configuration
         self.__menuCanva = tk.Canvas(self, width=800, height=600, borderwidth=0)
         self.__menuCanva.place(x=0, y=0)
 
-    def __setupBackground(self):
-        """Background configuration"""
-
+    def __setupBackground(self): #background image configuration
         global bgImg #Global variable to show the image
-        bgImg = PhotoImage(file= "media/menu.png")
+        bgImg = PhotoImage(file= "media/menu.png") 
         bgLabel = tk.Label(self.__menuCanva, image = bgImg)
         bgLabel.place(x=0, y=0)
 
-    def __setupLabel(self):
+    def __setupLabel(self): #Label configuration
         entryLabel = tk.Label(self.__menuCanva, text="Username: ", font=(HELVETICA, 10, 'bold'))
         entryLabel.place(x=350, y=205)       
 
-    def __setupEntry(self):
-        """Entry setup"""
+    def __setupEntry(self): #Name entry configuration
         self.__userNameInput = tk.StringVar()
         self.__userNameInput.set("")
         nameEntry = tk.Entry(self.__menuCanva, textvariable=self.__userNameInput, font=(HELVETICA, 10, "bold" ))
@@ -157,60 +137,61 @@ class setupBoatScreen(tk.Frame):
         self.__gameSetup = GameSetup()
         self.__initComponents()
         
-    def __initComponents(self):
+    def __initComponents(self): #widget calling
         self.__setupCanvas()
         self.__setupImagesFiles()
         self.__setupImagespcap()
         self.__setupKeyboardInput()    
         self.__setupLabel()
 
-    def __setupCanvas(self):
-        """Canvas configuration"""
-
+    def __setupCanvas(self): #canvas configuration
+        #Information canva
         self.__infoCanvas = tk.Canvas(self, width=WIDTH, height=HEIGHT, bg="blue")
         self.__infoCanvas.place(x=385, y=0)
-
+        #Boats configuration canva
         self.__setupCanvas = tk.Canvas(self, width=WIDTH, height=HEIGHT) 
         self.__setupCanvas.place(x=0, y=0)
-
+        #info display canva
         self.__countBoatCanvas = tk.Canvas(self, width=122, height=30, bg=BLACK) 
         self.__countBoatCanvas.place(x=323, y=0)
 
-    def __setupLabel(self): 
-        self.__boat = tk.Label(self.__countBoatCanvas, text='Bote 1', font=(HELVETICA, 12), bg=BLACK, fg='white')
-        self.__boat.place(x=5, y=5)
+    def __setupLabel(self): #1st boat label
+        self.__boat = tk.Label(self.__countBoatCanvas, text='1st Boat', font=(HELVETICA, 12), bg=BLACK, fg='white')
+        self.__boat.place(x=30, y=5)
 
     def __setupKeyboardInput(self): #Keyboard configuration
         self.bind_all('<Right>', lambda event: self.__move(self.__gameSetup.getArrow().moveRight))
         self.bind_all('<Up>', lambda event: self.__move(self.__gameSetup.getArrow().moveUp))
         self.bind_all('<Down>', lambda event: self.__move(self.__gameSetup.getArrow().moveDown))
         self.bind_all('<Left>', lambda event: self.__move(self.__gameSetup.getArrow().moveLeft))
-        self.bind_all('<k>', lambda event: self.__placeBoat(self.__gameSetup.getPlane().attack)) #place boat
+        self.bind_all('<k>', lambda event: self.__placeBoat(self.__gameSetup.getPlane().attack)) 
 
-    def __move(self, pMoveFunction): 
+    def __move(self, pMoveFunction):  #general movement function, receive the function to execute
         movement = pMoveFunction()
         self.__updateVisualPcapMatrix(movement[0], movement[1])
 
-    def __placeBoat(self, pMoveFunction):#TODO: hay que cambiar la logica de esta parte
+    def __placeBoat(self, pMoveFunction):#boat placement logic #TODO:hay que cambiar la logica de esta parte
         position = pMoveFunction()
         self.__updateVisualPcapMatrixPlaceBoat(position)
     
-    def __updateVisualPcapMatrix(self, oldMovement, newMovement): 
+    def __updateVisualPcapMatrix(self, oldMovement, newMovement): #Visual matrix update (used to show movements)
         tk.Label(self.__setupCanvas, image=self.__getImage(oldMovement[1]), bg=BLACK).place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
         tk.Label(self.__setupCanvas, image=self.__getImage(newMovement[1]), bg=BLACK).place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
     
-    def __updateVisualPcapMatrixPlaceBoat(self, position):
+    def __updateVisualPcapMatrixPlaceBoat(self, position): #Visal matrix update (used to show the boat placement)
         tk.Label(self.__setupCanvas, image=self.__getImage(position[1]), bg=BLACK).place(x=position[0][1]*32,y=position[0][0]*32)
        
-    def __setupImagesFiles(self):
+    def __setupImagesFiles(self): #Fucntion to save all the images on RAM
         self.__arrowUp = PhotoImage(file= "media/arrowUp.png")
         self.__arrowDown = PhotoImage(file= "media/arrowDown.png")
         self.__arrowRight = PhotoImage(file= "media/arrowRight.png")
         self.__arrowLeft = PhotoImage(file= "media/arrowLeft.png")
         self.__waterBlock = PhotoImage(file= "media/waterBlock.png")
         self.__stoneBlock = PhotoImage(file= "media/stoneBlock.png")
-        
-    def __getImage(self, id):
+        self.__roadBoatHor = PhotoImage(file= "media/roadBoatHow.png")
+        self.__roadBoatVer = PhotoImage(file= "media/roadBoatVert.png")
+
+    def __getImage(self, id): #Function that return an image using the ID
         if id == 9.1:
             return self.__arrowUp
         elif id == 9.2:
@@ -221,14 +202,16 @@ class setupBoatScreen(tk.Frame):
             return self.__arrowLeft     
         elif id == 7: 
             return self.__stoneBlock
-            #hacen falta todos los de los barcos
+        elif id == 1.1:
+            return self.__roadBoatVer
+        elif id == 1.2:
+            return self.__roadBoatHor
         else: 
             return self.__waterBlock
             
-    def __setupImagespcap(self):
-        matrixpcap = self.__gameSetup.getpcapMatrix().getMatrix()
-        
-        for i in range(0,len(matrixpcap)):
+    def __setupImagespcap(self): #Show the visual matrix
+        matrixpcap = self.__gameSetup.getpcapMatrix().getMatrix() #Getting the matrix
+        for i in range(0,len(matrixpcap)): #Using iteration to go through the array
             for j in range(0,len(matrixpcap[0])):
                 tk.Label(self.__setupCanvas, image=self.__getImage(matrixpcap[i][j]), bg=BLACK).place(x=j*32,y=i*32)
 
@@ -240,22 +223,22 @@ class GameScreen(tk.Frame):
         self.__turn = Turn()
         self.__initComponents()
         
-    def __initComponents(self):
+    def __initComponents(self): #widget calling
         self.__setupCanvas()
         self.__setupImagesFiles()
         self.__setupImagespapc()
         self.__setupImagespcap()
         self.__setupKeyboardInput()
         
-    def __setupCanvas(self):
+    def __setupCanvas(self): #canvas configuration
         """Canvas configuration"""
-
+        #boat canvas
         self.__boatsCanvas = tk.Canvas(self, width=WIDTH, height=HEIGHT, bg="blue")
         self.__boatsCanvas.place(x=0, y=0)
-
+        #game canvas
         self.__gameCanvas = tk.Canvas(self, width=WIDTH, height=HEIGHT) 
         self.__gameCanvas.place(x=385, y=0)
-
+        #count canvas
         self.__countCanvas = tk.Canvas(self, width=122, height=30, bg=BLACK) 
         self.__countCanvas.place(x=323, y=0)
 
@@ -266,7 +249,7 @@ class GameScreen(tk.Frame):
         self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getPlane().moveLeft))
         self.bind_all('<j>', lambda event: self.__attack(self.__gameSetup.getPlane().attack)) #Ejecutar el "disparo", ademas tiene que cambiar el estado de turno
 
-    def __attack(self, pMoveFunction):
+    def __attack(self, pMoveFunction): #Attack function
         if self.__turn.getTurn():
             position = pMoveFunction()
             self.__updateVisualPapcMatrixAttack(position)
@@ -274,22 +257,22 @@ class GameScreen(tk.Frame):
             position = self.__gameSetup.getComputer().attack()
             self.__updateVisualPcapMatrix(position)
 
-    def __move(self, pMoveFunction): #funcion que realiza el movimiento general del personaje
+    def __move(self, pMoveFunction): #General move function, used to move the plane
         if self.__turn.getTurn():
             movement = pMoveFunction()
             self.__updateVisualPapcMatrix(movement[0], movement[1])
             
-    def __updateVisualPapcMatrix(self, oldMovement, newMovement): # funcion que actualiza dos elementos de la matriz dados movimientos
+    def __updateVisualPapcMatrix(self, oldMovement, newMovement): # update visual matrix, used to move the plane in the visual matrix
         tk.Label(self.__gameCanvas, image=self.__getImage(oldMovement[1]), bg=BLACK).place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
         tk.Label(self.__gameCanvas, image=self.__getImage(newMovement[1]), bg=BLACK).place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
 
-    def __updateVisualPapcMatrixAttack(self, position):
+    def __updateVisualPapcMatrixAttack(self, position):# update visual papcmatrix, used to show the attacks
         tk.Label(self.__gameCanvas, image=self.__getImage(position[1]), bg=BLACK).place(x=position[0][1]*32,y=position[0][0]*32)
     
-    def __updateVisualPcapMatrix(self, position):
+    def __updateVisualPcapMatrix(self, position): #update visual pcapmatrix, used to show the attacks
         tk.Label(self.__boatsCanvas, image=self.__getImage(position[1]), bg=BLACK).place(x=position[0][1]*32,y=position[0][0]*32)
 
-    def __setupImagesFiles(self):
+    def __setupImagesFiles(self): #saving the images on RAM
         self.__planeUp = PhotoImage(file= "media/planeUp.png")
         self.__planeDown = PhotoImage(file= "media/planeDown.png")
         self.__planeLeft = PhotoImage(file= "media/planeLeft.png")
@@ -300,7 +283,7 @@ class GameScreen(tk.Frame):
         self.__debrisBlock = PhotoImage(file= "media/debrisBlock.png")
         self.__playerBoat = PhotoImage(file = "media/roadBoatHor.png")
     
-    def __getImage(self, id): # funcion para obtener la imagen deseada dependiendo de su ID
+    def __getImage(self, id): # function that return an image using the ID
         if id == 7 :
             return self.__stoneBlock
         elif id == 0:
@@ -322,7 +305,7 @@ class GameScreen(tk.Frame):
         else:
             return self.__waterBlock
 
-    def __setupImagespapc(self): # Carga todas las imagenes visualmente
+    def __setupImagespapc(self): # Carga todas las imagenes visualmente #TODO: POR AQUI SE QUEDO COMENTANTO CODIGO
         
         matrixpapc = self.__gameSetup.getPapcMatrix().getMatrix()
 
@@ -443,7 +426,7 @@ class ToCheck:
                 break
         return self.__estado
     
-    def checkHorBoatsLeft(self, pX, pY):#TODO:
+    def checkHorBoatsLeft(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 1] == 1.2
@@ -453,7 +436,7 @@ class ToCheck:
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 1] == 1.1
 
-    def checkHorBoatsRight(self, pX, pY):#TODO:
+    def checkHorBoatsRight(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 1] == 1.2
@@ -463,7 +446,7 @@ class ToCheck:
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 1] == 1.1
 
-    def checkHorBoatsUp(self, pX, pY):#TODO:
+    def checkHorBoatsUp(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] == 1.2
@@ -473,7 +456,7 @@ class ToCheck:
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] == 1.1
     
-    def checkHorBoatsDown(self, pX, pY):#TODO:
+    def checkHorBoatsDown(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] == 1.2
@@ -521,7 +504,7 @@ class Turn: # Another singletone to modify and return the "Turn" value
     def getTurn(cls): # return the turn value
         return cls.__turn
 
-class Arrow: #TODO:
+class Arrow: 
     def __init__(self):
         self.__x = 6
         self.__y = 0
@@ -862,7 +845,7 @@ class AtkPlane:
                     self.setupFxSound(0)
                     return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
 
-class PcAttackPlayerMatrix(object):#TODO:
+class PcAttackPlayerMatrix(object):
     __instance = None
 
     def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia de la matriz
@@ -923,7 +906,7 @@ class Computer:
             return self.attack()
 
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
-    def __init__(self): #constructor TODO:
+    def __init__(self): #constructor
         self.__papcMatrix = PlayerAttackPcMatrix()
         self.__atkPlane = AtkPlane()
         self.__check = ToCheck()
