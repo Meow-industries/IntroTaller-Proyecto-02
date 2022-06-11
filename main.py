@@ -106,7 +106,7 @@ class MainMenu(tk.Frame):
         self.__setupLabel()
         
     def __setupButton(self,controller): # Play button configuration
-        playButton = tk.Button(self, text="Play", font=(HELVETICA, 15, 'bold'), width=10, command= lambda : controller.showFrame(setupBoatScreen))
+        playButton = tk.Button(self, text="Play", font=(HELVETICA, 15, 'bold'), width=10, command= lambda : controller.showFrame(GameScreen))
         playButton.place(x=325, y=280)
 
     def __setupCanvas(self): #Canva configuration
@@ -188,7 +188,7 @@ class setupBoatScreen(tk.Frame):
         self.__arrowLeft = PhotoImage(file= "media/arrowLeft.png")
         self.__waterBlock = PhotoImage(file= "media/waterBlock.png")
         self.__stoneBlock = PhotoImage(file= "media/stoneBlock.png")
-        self.__roadBoatHor = PhotoImage(file= "media/roadBoatHow.png")
+        self.__roadBoatHor = PhotoImage(file= "media/roadBoatHor.png")
         self.__roadBoatVer = PhotoImage(file= "media/roadBoatVert.png")
 
     def __getImage(self, id): #Function that return an image using the ID
@@ -338,26 +338,46 @@ class ToCheck:
         self.__papcMatrix = PlayerAttackPcMatrix()
         self.__pcapMatrix = PcAttackPlayerMatrix()
         
-    def checkLimitRight(self, pX, pY):
+    def checkLimitRightPapc(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x][self.__y + 1] == 7
 
-    def checkLimitLeft(self, pX, pY):
+    def checkLimitLeftPapc(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x][self.__y - 1] == 7
 
-    def checkLimitDown(self, pX, pY):
+    def checkLimitDownPapc(self, pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x + 1][self.__y] == 7
 
-    def checkLimitUp(self, pX, pY):
+    def checkLimitUpPapc(self, pX, pY):
         self.__x = pX
         self.__y = pY 
         return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == 7
-    
+    #----------------------------------------------------------------
+    def checkLimitRightPcap(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 1] == 7
+
+    def checkLimitLeftPcap(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 1] == 7
+
+    def checkLimitDownPcap(self, pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] == 7
+
+    def checkLimitUpPcap(self, pX, pY):
+        self.__x = pX
+        self.__y = pY 
+        return self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] == 7
+
     def checkRightBoat(self,pX, pY):
         self.__x = pX
         self.__y = pY
@@ -466,6 +486,208 @@ class ToCheck:
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] == 1.1
 
+    #=====================================================
+
+    def checkLimitUpTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x + 2][self.__y] == 7
+    
+    def checkLimitDownTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x - 2][self.__y] == 7
+
+    def checkLimitRightTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 2] == 7 
+    
+    def checkLimitLefttTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 2] == 7 
+
+    #  -----------------------------------------------
+    def checkLimitUpThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x + 3][self.__y] == 7
+    
+    def checkLimitDownThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x - 3][self.__y] == 7
+
+    def checkLimitRightThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 3] == 7 
+    
+    def checkLimitLefttThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 3] == 7 
+        
+    # ------------------- Boats -------------------
+    def checkBoatUpPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] in self.__values
+    
+    def checkBoatDownPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] in self.__values
+
+    def checkBoatRightPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 1] in self.__values
+    
+    def checkBoatLefttPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 1] in self.__values
+    # ---------------------------------------------
+    def checkBoatUpTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x + 2][self.__y] in self.__values
+    
+    def checkBoatDownTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x - 2][self.__y] in self.__values
+
+    def checkBoatRightTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 2] in self.__values
+    
+    def checkBoatLefttTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 2] in self.__values
+
+    #  -----------------------------------------------
+    def checkBoatUpThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x + 3][self.__y] in self.__values
+    
+    def checkBoatDownThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x - 3][self.__y] in self.__values
+
+    def checkBoatRightThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 3] in self.__values
+    
+    def checkBoatLefttThreePcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        self.__values = [1.1, 1.2]
+        return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 3] in self.__values 
+        
+#////////////////////////////papc/////////////////////////////////
+    def checkLimitUpTwoPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x + 2][self.__y] == 7
+    
+    def checkLimitDownTwoPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x - 2][self.__y] == 7
+
+    def checkLimitRightTwoPcap(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 2] == 7 
+    
+    def checkLimitLefttTwoPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 2] == 7 
+
+    #  -----------------------------------------------
+    def checkLimitUpThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x + 3][self.__y] == 7
+    
+    def checkLimitDownThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x - 3][self.__y] == 7
+
+    def checkLimitRightThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 3] == 7 
+    
+    def checkLimitLefttThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 3] == 7 
+        
+    # ------------------- Boats -------------------
+    def checkBoatUpTwoPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x + 2][self.__y] == -1
+    
+    def checkBoatDownTwoPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x - 2][self.__y] == -1
+
+    def checkBoatRightTwoPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 2] == -1
+    
+    def checkBoatLefttTwoPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 2] == -1
+
+    #  -----------------------------------------------
+    def checkBoatUpThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x + 3][self.__y] == -1
+    
+    def checkBoatDownThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x - 3][self.__y] == -1
+        
+    def checkBoatRightThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 3] == -1
+    
+    def checkBoatLefttThreePapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 3] == -1
+
+    
 class PlayerAttackPcMatrix(object):
     __instance = None
 
@@ -490,9 +712,9 @@ class PlayerAttackPcMatrix(object):
         cls.__matrix[pNew[0]][pNew[1]] = newID
         return pNew, newID
 
-class Turn: # Another singletone to modify and return the "Turn" value
+class Turn(object): # Another singletone to modify and return the "Turn" value
     __instance = None
-    def __new__(cls): #Haciendo uso de un singletone para tener una unica instancia del turno
+    def __new__(cls): 
         if cls.__instance is None:
             cls.__instance = super(Turn, cls).__new__(cls)
             cls.__turn = True
@@ -504,10 +726,24 @@ class Turn: # Another singletone to modify and return the "Turn" value
     def getTurn(cls): # return the turn value
         return cls.__turn
 
+class BoatNumber(object): # Another singletone to modify and return the "BoatNumber" value, this is used to place the boats, this class return the "type" of boats.
+    __instance = None
+    def __new__(cls): 
+        if cls.__instance is None:
+            cls.__instance = super(BoatNumber, cls).__new__(cls)
+            cls.__boatNumber = 1
+        return cls.__instance
+
+    def modifyBoatNumber(cls): 
+        cls.__boatNumber += 1
+
+    def getBoatNumber(cls): # return the turn value
+        return cls.__boatNumber
+
 class Arrow: 
     def __init__(self):
-        self.__x = 6
-        self.__y = 0
+        self.__x = 10
+        self.__y = 1
         #self.__countBoat = 0
         self.__RIGHT = False
         self.__LEFT = False
@@ -515,6 +751,8 @@ class Arrow:
         self.__DOWN = False
         self.__check = ToCheck()
         self.__pcapMatrix = PcAttackPlayerMatrix()
+        self.__boatNumber = BoatNumber()
+        self.__ID = 9.3
     
     def setupFxSound(self):
         __constructionFx = pygame.mixer.Sound("sound/contructionSound.mp3")
@@ -531,7 +769,7 @@ class Arrow:
         oldY = self.__y
         self.__ID = 9.4
 
-        if not self.__check.checkLimitLeft(self.__x, self.__y):
+        if not self.__check.checkLimitLeftPcap(self.__x, self.__y):
             self.__LEFT = True
             self.__DOWN, self.__UP, self.__RIGHT = False, False, False
             print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
@@ -542,9 +780,7 @@ class Arrow:
             return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
 
     def moveRight(self):
-        if self.__check.checkLimitUp(self.__x, self.__y) and self.__check.checkLimitDown(self.__x, self.__y):
-            self.__oldID = 7
-        elif self.__check.checkVerBoatsRight(self.__x, self.__y):
+        if self.__check.checkVerBoatsRight(self.__x, self.__y):
             self.__oldID = 1.1
         elif self.__check.checkHorBoatsRight(self.__x, self.__y):
             self.__oldID = 1.2
@@ -554,7 +790,7 @@ class Arrow:
         oldY = self.__y
         self.__ID = 9.3
 
-        if not self.__check.checkLimitRight(self.__x, self.__y):
+        if not self.__check.checkLimitRightPcap(self.__x, self.__y):
             self.__RIGHT = True
             self.__DOWN, self.__UP, self.__LEFT = False, False, False
             print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
@@ -575,7 +811,7 @@ class Arrow:
         oldX = self.__x
         self.__ID = 9.1
 
-        if not self.__check.checkLimitUp(self.__x, self.__y):
+        if not self.__check.checkLimitUpPcap(self.__x, self.__y):
             self.__UP = True
             self.__DOWN, self.__RIGHT, self.__LEFT = False, False, False
             print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
@@ -596,7 +832,7 @@ class Arrow:
         oldX = self.__x
         self.__ID = 9.2
 
-        if not self.__check.checkLimitDown(self.__x, self.__y):
+        if not self.__check.checkLimitDownPcap(self.__x, self.__y):
             self.__DOWN = True
             self.__UP, self.__RIGHT, self.__LEFT = False, False, False
             print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
@@ -608,12 +844,108 @@ class Arrow:
         
 
     def setBoat(self): 
-        if self.__UP or self.__DOWN: 
-            pass
-        else: 
-            pass
-    
+        self.__actualBoat = self.__boatNumber.getBoatNumber()
 
+        if self.__ID == 9.1 or self.__ID == 9.2:
+            self.__image = 1.1
+        else:
+            self.__image = 1.2
+
+        if self.__ID == 9.1:
+            if self.__actualBoat == 1:
+                limitCondition = self.__check.checkLimitUpPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatUpPcap(self.__x, self.__y)
+                if not limitCondition and not boatCondition:
+                    pass
+                else:
+                    pass
+            elif self.__actualBoat == 2:
+                limitCondition = self.__check.checkLimitUpPcap(self.__x, self.__y) and self.__check.checkLimitUpTwoPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatUpPcap(self.__x, self.__y) and self.__check.checkBoatUpTwoPcaP(self.__x, self.__y)
+                if not limitCondition and not boatCondition:
+                    pass
+                else:
+                    pass
+            else:
+                limitCondition = self.__check.checkLimitUpPcap(self.__x, self.__y) and self.__check.checkLimitUpTwoPcap(self.__x, self.__y) and self.__check.checkLimitUpThreePcap
+                boatCondition = self.__check.checkBoatUpPcap(self.__x, self.__y) and self.__check.checkBoatUpTwoPcaP(self.__x, self.__y) and self.__check.checkBoatUpThreePcap(self.__x, self.__y)
+                if not limitCondition and not boatCondition:
+                    pass
+                else:
+                    pass
+                
+        if self.__ID == 9.2: 
+            if self.__actualBoat == 1: 
+                limitCondition = self.__check.checkLimitDownPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatDownPcap(self.__x, self.__y)
+                if not limitCondition and not boatCondition: 
+                    pass
+                else:
+                    pass
+            elif self.__actualBoat == 2: 
+                limitCondition = self.checkLimitDownPcap(self.__x, self.__y) and self.__check.checkLimitDownTwoPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatDownPcap(self.__x, self.__y) and self.__check.checkBoatDownTwoPcaP(self.__x, self.__y)
+
+                if not limitCondition and not boatCondition: 
+                    pass
+                else: 
+                    pass
+            else: 
+                limitCondition = self.checkLimitDownPcap(self.__x, self.__y) and self.__check.checkLimitDownTwoPcap(self.__x, self.__y) and self.__check.checkLimitDownThreePcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatDownPcap(self.__x, self.__y) and self.__check.checkBoatDownTwoPcaP(self.__x, self.__y) and self.__check.checkBoatDownThreePcap(self.__x, self.__y)
+
+                if not limitCondition and not boatCondition: 
+                    pass
+                else: 
+                    pass
+        
+        if self.__ID == 9.3: 
+            if self.__actualBoat == 1: 
+                limitCondition = self.__check.checkLimitRightPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatRightPcap(self.__x, self.__y)
+                if not limitCondition and not boatCondition: 
+                    pass
+                else:
+                    pass
+            elif self.__actualBoat == 2: 
+                limitCondition = self.checkLimitRightPcap(self.__x, self.__y) and self.__check.checkLimitRightTwoPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatRightPcap(self.__x, self.__y) and self.__check.checkBoatRightTwoPcaP(self.__x, self.__y)
+
+                if not limitCondition and not boatCondition: 
+                    pass
+                else: 
+                    pass
+            else: 
+                limitCondition = self.checkLimitRightPcap(self.__x, self.__y) and self.__check.checkLimitRightTwoPcap(self.__x, self.__y) and self.__check.checkLimitRightThreePcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatRightPcap(self.__x, self.__y) and self.__check.checkBoatRightTwoPcaP(self.__x, self.__y) and self.__check.checkBoatRightThreePcap(self.__x, self.__y)
+                if not limitCondition and not boatCondition: 
+                    pass
+                else: 
+                    pass
+                
+        if self.__ID == 9.4: 
+            if self.__actualBoat == 1: 
+                limitCondition = self.__check.checkLimitLeftPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatLeftPcap(self.__x, self.__y)
+                if not limitCondition and not boatCondition: 
+                    pass
+                else:
+                    pass
+            elif self.__actualBoat == 2: 
+                limitCondition = self.checkLimitLeftnPcap(self.__x, self.__y) and self.__check.checkLimitLeftTwoPcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatLeftPcap(self.__x, self.__y) and self.__check.checkBoatLeftTwoPcaP(self.__x, self.__y)
+                if not limitCondition and not boatCondition: 
+                    pass
+                else: 
+                    pass
+            else: 
+                limitCondition = self.checkLimitLeftPcap(self.__x, self.__y) and self.__check.checkLimitLeftTwoPcap(self.__x, self.__y) and self.__check.checkLimitLeftThreePcap(self.__x, self.__y)
+                boatCondition = self.__check.checkBoatLeftPcap(self.__x, self.__y) and self.__check.checkBoatLeftTwoPcaP(self.__x, self.__y) and self.__check.checkBoatLeftThreePcap(self.__x, self.__y)
+                if not limitCondition and not boatCondition: 
+                    pass
+                else: 
+                    pass
+            
 class AtkPlane:
     def __init__(self): #class constructor
         self.__x = 6
@@ -625,6 +957,7 @@ class AtkPlane:
         self.__check = ToCheck()
         self.__papcMatrix = PlayerAttackPcMatrix()
         self.__turn = Turn()
+        self.__ID = 4.3
     
     #def getCoords(self):
     #return self.__x, self.__y
@@ -666,14 +999,14 @@ class AtkPlane:
         oldY = self.__y
         self.__ID = 4.4
 
-        if not self.__check.checkLimitLeft(self.__x, self.__y):
+        if not self.__check.checkLimitLeftPapc(self.__x, self.__y):
             self.__y -= 1
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, oldY), self.__oldID, self.__ID)
 
     def moveRight(self):
-        if self.__check.checkLimitUp(self.__x, self.__y) and self.__check.checkLimitDown(self.__x, self.__y):
+        if self.__check.checkLimitUpPapc(self.__x, self.__y) and self.__check.checkLimitDownPapc(self.__x, self.__y):
             self.__oldID = 7
 
         elif self.__check.checkRightDebris(self.__x, self.__y):
@@ -705,7 +1038,7 @@ class AtkPlane:
         oldY = self.__y
         self.__ID = 4.3
 
-        if not self.__check.checkLimitRight(self.__x, self.__y):
+        if not self.__check.checkLimitRightPapc(self.__x, self.__y):
             self.__y += 1
             return self.__papcMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -741,7 +1074,7 @@ class AtkPlane:
         oldX = self.__x
         self.__ID = 4.1
 
-        if not self.__check.checkLimitUp(self.__x, self.__y):
+        if not self.__check.checkLimitUpPapc(self.__x, self.__y):
             self.__x -= 1
             return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -777,7 +1110,7 @@ class AtkPlane:
         oldX = self.__x
         self.__ID = 4.2
 
-        if not self.__check.checkLimitDown(self.__x, self.__y):
+        if not self.__check.checkLimitDownPapc(self.__x, self.__y):
             self.__x += 1
             return self.__papcMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -785,7 +1118,7 @@ class AtkPlane:
 
     def attack(self):
         self.__moves += 1 #Movement cont
-        if not self.__check.checkLimitUp(self.__x, self.__y):
+        if not self.__check.checkLimitUpPapc(self.__x, self.__y):
             if self.__ID == 4.1: #Player looks up
                 if self.__check.checkUpBoat(self.__x, self.__y):  
                     self.__turn.setTurn(True)
@@ -800,7 +1133,7 @@ class AtkPlane:
                     self.setupFxSound(0)
                     return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
-        if not self.__check.checkLimitDown(self.__x, self.__y):
+        if not self.__check.checkLimitDownPapc(self.__x, self.__y):
             if self.__ID == 4.2: #Player looks down
                 if self.__check.checkDownBoat(self.__x, self.__y): 
                     self.__turn.setTurn(True)
@@ -815,7 +1148,7 @@ class AtkPlane:
                     self.setupFxSound(0)
                     return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
 
-        if not self.__check.checkLimitRight(self.__x, self.__y):
+        if not self.__check.checkLimitRightPapc(self.__x, self.__y):
             if self.__ID == 4.3: #player looks right
                 if self.__check.checkRightBoat(self.__x, self.__y): #Player looks up
                     self.__turn.setTurn(True)
@@ -830,7 +1163,7 @@ class AtkPlane:
                     self.setupFxSound(0)
                     return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
         
-        if not self.__check.checkLimitLeft(self.__x, self.__y):
+        if not self.__check.checkLimitLeftPapc(self.__x, self.__y):
             if self.__ID == 4.4: # player looks left
                 if self.__check.checkLeftBoat(self.__x, self.__y): #Player looks up
                     self.__turn.setTurn(True)
