@@ -136,7 +136,6 @@ class setupBoatScreen(tk.Frame):
         tk.Frame.__init__(self, parent) #constructor 
         self.__gameSetup = GameSetup()
         self.__boatNumber = BoatNumber()
-        self.__execute = Execute()
         self.__initComponents(controller)
         
     def __initComponents(self, controller): #widget calling
@@ -169,7 +168,6 @@ class setupBoatScreen(tk.Frame):
         if boat >= 4:
             self.__gameSetup.getpcapMatrix().loadMatrix(matrixToSave)
             controller.showFrame(GameScreen)
-            self.__execute.modifyExec()
         else:
             messagebox.showinfo('Error', 'Please, place all boats')
 
@@ -261,7 +259,6 @@ class GameScreen(tk.Frame):
         intLabel.place(x=0, y=0)
         #Button
         tk.Button(self, text="Start", font=(HELVETICA, 15, 'bold'), width=8, command= lambda : self.__initComponents()).place(x=340, y=260)
-        print(self.__gameSetup.getpcapMatrix().getMatrix())
         
     def __initComponents(self): #widget calling
         self.__setupCanvas()
@@ -510,6 +507,14 @@ class ToCheck:
                 break
         return self.__estado
     
+    def checkPlaceCoordsDisp(self, cord, history): # function to check if the random place coord is avialable
+        self.__estado = False
+        for verify in history:
+            if verify == cord:
+                self.__estado = True
+                break
+        return self.__estado
+
     def checkHorBoatsLeft(self, pX, pY):
         self.__x = pX
         self.__y = pY
@@ -594,7 +599,6 @@ class ToCheck:
         self.__x = pX
         self.__y = pY
         self.__values = [1.1, 1.2]
-        print(f"In: {self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] in self.__values}")
         return self.__pcapMatrix.getMatrix()[self.__x - 1][self.__y] in self.__values
     
     def checkBoatDownPcap(self,pX, pY):
@@ -781,20 +785,6 @@ class Turn(object): # Another singletone to modify and return the "Turn" value
 
     def getTurn(cls): # return the turn value
         return cls.__turn
-
-class Execute(object): # Another singletone to modify and return the "Turn" value
-    __instance = None
-    def __new__(cls): 
-        if cls.__instance is None:
-            cls.__instance = super(Execute, cls).__new__(cls)
-            cls.__exec = 0
-        return cls.__instance
-
-    def modifyExec(cls): # turn modification 
-        cls.__exec += 1
-
-    def getExec(cls): # return the turn value
-        return cls.__exec
 
 class BoatNumber(object): # Another singletone to modify and return the "BoatNumber" value, this is used to place the boats, this class return the "type" of boats.
     __instance = None
@@ -1328,31 +1318,47 @@ class PcAttackPlayerMatrix(object): #TODO:
         return cls.__result
 
     def updateBoat(cls, pNewTuple, newID, exit): #TODO:
-        print(f'pNewTuple: {pNewTuple}')
         if exit == 1:
             for pNew in pNewTuple: 
-                print(f'pNew: {pNew}')
-                print(f'ID: {newID}')
                 cls.__matrix[pNew[0]][pNew[1]] = newID
             return pNewTuple, newID, 1
         else:
             return pNewTuple, newID, 0
     
-class Computer:
+class Computer: #TODO:
     def __init__(self):
         self.__pcapMatrix = PcAttackPlayerMatrix()
         self.__check = ToCheck()
         self.__turn = Turn()
         self.__history = []
+        self.__placeHistory = []
+    
+    def setupFxSound(self, fxID):
+        if fxID == 1:
+            __explotionFx = pygame.mixer.Sound("sound/explotionSound.mp3")
+            __explotionFx.play() 
+        else:
+            __missFx = pygame.mixer.Sound("sound/missSound.mp3")
+            __missFx.play() 
 
     def generateCoords(self):
         self.__x = random.randint(1,10)
         self.__y = random.randint(1,10)
         self.__randomCoord = [self.__x, self.__y]
         return self.__randomCoord
+    
+    def generateOrientation(self):
+        self.__orientation = random.randint(1,4)
+        return self.__orientation
 
-    def addHistory(self):
-        self.__history.append(self.__randomCoord)
+    def addHistory(self, coords):
+        self.__history.append(coords)
+    
+    def addPlaceHistory(self, coords):
+        self.__placeHistory.append(coords)
+    
+    def getPlaceHistory(self):
+        return self.__placeHistory
 
     def getHistory(self):
         return self.__history 
@@ -1363,15 +1369,63 @@ class Computer:
 
         if not self.__check.checkCoordDisp(self.__coords, self.__history):
             if self.__matrix[self.__x][self.__y] == 1.1 or self.__matrix[self.__x][self.__y] == 1.2:
+                self.setupFxSound(1)
                 self.__ID = 3
             else:
+                self.setupFxSound(2)
                 self.__ID = 5 
-            self.__history.append(self.__coords)
+            self.addHistory(self.__coords)
             self.__turn.setTurn(True)
             print("coords: ", self.__coords, "History: ",self.__history)
             return self.__pcapMatrix.updateAttack(self.__coords, self.__ID)
         else:
             return self.attack()
+
+    def getPlaceCoord(self):
+        self.__coords = self.generateCoords()
+        return self.__coords
+    
+    def getOrientationCoord(self):
+        self.__orient = self.generateOrientation()
+        return self.__orient
+
+    def placeBoats(self): #TODO: pensar como ejecutar esto diferentes veces, digamos hacerlo como en un ciclo, que pasa si no se cumple la condicion basicamente
+        self.__matrix = self.__pcapMatrix.getMatrix()
+        self.__randomBoat = RandomBoatNumber()
+        doNothing = (0,0,0)
+        if self.__randomBoat.getBoatNumber > 3:
+            return doNothing#TODO: CHECK THIS
+
+        if self.__randomBoat.getBoatNumber == 1:
+            self.__coords = self.getPlaceCoord()
+            if not self.__check.checkPlaceCoordsDisp(self.__coords, self.__placeHistory):
+                if self.__orient == 1:#Up
+                    __limitCondition = self.__check.checkLimitUpPapc(self.__coords[0], self.__coords[1])
+                if not __limitCondition:
+                    pass
+
+                elif self.__orient == 2:#Right
+                    pass
+                elif self.__orient == 3: #Down
+                    pass
+                else:#Left
+                    pass
+            else:
+                return self.placeBoats()
+
+class RandomBoatNumber(object): 
+    __instance = None
+    def __new__(cls): 
+        if cls.__instance is None:
+            cls.__instance = super(RandomBoatNumber, cls).__new__(cls)
+            cls.__randomBoatNumber = 1
+        return cls.__instance
+
+    def modifyBoatNumber(cls): 
+        cls.__randomBoatNumber += 1
+
+    def getBoatNumber(cls): # return the turn value
+        return cls.__randomBoatNumber
 
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
     def __init__(self): #constructor
