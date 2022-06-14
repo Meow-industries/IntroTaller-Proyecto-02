@@ -1,3 +1,5 @@
+from ast import Pass
+from inspect import getcoroutinestate
 import tkinter as tk
 from tkinter import PhotoImage, messagebox
 import pygame, copy, random
@@ -135,11 +137,11 @@ class setupBoatScreen(tk.Frame):
     def __init__(self, parent, controller): #constructor
         tk.Frame.__init__(self, parent) #constructor 
         self.__gameSetup = GameSetup()
-        self.__boatNumber = BoatNumber()
         self.__initComponents(controller)
         
     def __initComponents(self, controller): #widget calling
         self.__setupCanvas()
+        self.__setupInstructions()
         self.__setupImagesFiles()
         self.__setupImagespcap()
         self.__setupKeyboardInput()    
@@ -156,29 +158,44 @@ class setupBoatScreen(tk.Frame):
         #info display canva
         self.__countBoatCanvas = tk.Canvas(self, width=122, height=30, bg=BLACK) 
         self.__countBoatCanvas.place(x=323, y=0)
+
+    def __setupInstructions(self): #background image configuration
+        global InsImg
+        InsImg =  PhotoImage(file= "media/instructionsScreen.png")
+        tk.Label(self.__infoCanvas, image= InsImg).place(x=0, y=0)
     
     def __setupButton(self, controller):
         playButton = tk.Button(self.__infoCanvas, text="Next", font=(HELVETICA, 15, 'bold'), width=5, command= lambda : self.__playCommand(controller))
         playButton.place(x=310, y=340) 
 
     def __playCommand(self, controller):
-        boat =  self.__boatNumber.getBoatNumber()
+        for execution in range(0,3):
+            self.__gameSetup.getComputer().placeBoats()
+        papcMatrixToSave = self.__gameSetup.getPapcMatrix().getMatrix()
+        self.__gameSetup.getPapcMatrix().loadMatrix(papcMatrixToSave)
+
+        for row in papcMatrixToSave:
+            print(row)
+            
+        boatNumber =  self.__gameSetup.getBoatNumber().getBoatNumber()
         matrixToSave = self.__gameSetup.getpcapMatrix().getMatrix()
 
-        if boat >= 4:
+        if boatNumber >= 4:
             self.__gameSetup.getpcapMatrix().loadMatrix(matrixToSave)
             controller.showFrame(GameScreen)
         else:
             messagebox.showinfo('Error', 'Please, place all boats')
 
     def __setupLabel(self): #label configuration
-        boat =  self.__boatNumber.getBoatNumber()
-        if boat == 1:
+        boatNumber =  self.__gameSetup.getBoatNumber().getBoatNumber()
+        if boatNumber == 1:
             self.__boat = tk.Label(self.__countBoatCanvas, text='1st Boat', font=(HELVETICA, 12), bg=BLACK, fg='white')
-        elif boat == 2:
+        elif boatNumber == 2:
             self.__boat = tk.Label(self.__countBoatCanvas, text='2nd Boat', font=(HELVETICA, 12), bg=BLACK, fg='white')
-        else: 
+        elif boatNumber == 3: 
             self.__boat = tk.Label(self.__countBoatCanvas, text='3rd Boat', font=(HELVETICA, 12), bg=BLACK, fg='white')
+        else: 
+            self.__boat = tk.Label(self.__countBoatCanvas, text='    GO!   ', font=(HELVETICA, 12), bg=BLACK, fg='white')
         self.__boat.place(x=30, y=5)  
 
     def __setupKeyboardInput(self): #Keyboard configuration
@@ -404,13 +421,13 @@ class ToCheck:
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x][self.__y + 1] == 7
 
-    def checkLimitLeftPcap(self, pX, pY):
+    def checkLimitLeftPcap(self, pX, pY):        
         self.__x = pX
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x][self.__y - 1] == 7
 
-    def checkLimitDownPcap(self, pX, pY):
-        self.__x = pX
+    def checkLimitDownPcap(self, pX, pY):     
+        self.__x = pX      
         self.__y = pY
         return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] == 7
 
@@ -677,7 +694,7 @@ class ToCheck:
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x + 2][self.__y] == 7
 
-    def checkLimitRightTwoPcap(self,pX, pY):
+    def checkLimitRightTwoPapc(self,pX, pY):
         self.__x = pX
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x][self.__y + 2] == 7 
@@ -685,7 +702,7 @@ class ToCheck:
     def checkLimitLeftTwoPapc(self,pX, pY):
         self.__x = pX
         self.__y = pY
-        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 2] == 7 
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 2] == 7 #TODO:
 
     def checkLimitUpThreePapc(self,pX, pY):
         self.__x = pX
@@ -707,6 +724,26 @@ class ToCheck:
         self.__y = pY
         return self.__papcMatrix.getMatrix()[self.__x][self.__y - 3] == 7 
     
+    def checkBoatUpPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == -1
+    
+    def checkBoatDownPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__pcapMatrix.getMatrix()[self.__x + 1][self.__y] == -1
+
+    def checkBoatRightPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y + 1] == -1
+    
+    def checkBoatLeftPapc(self,pX, pY):
+        self.__x = pX
+        self.__y = pY
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 1] == -1
+        
     def checkBoatUpTwoPapc(self,pX, pY):
         self.__x = pX
         self.__y = pY
@@ -763,14 +800,19 @@ class PlayerAttackPcMatrix(object):
     def getMatrix(cls): # funcion que devulve la matriz
         return cls.__matrix
 
-    def updatePosition(cls, pOld, pNew, oldID, newID): #Update the logic matriz when the player moves
+    def updatePosition(cls, pOld, pNew, oldID, newID): #Update the logic matriz when the player moves       
         cls.__matrix[pOld[0]][pOld[1]] = oldID 
         cls.__matrix[pNew[0]][pNew[1]] = newID 
         return (pOld, oldID), (pNew, newID)
     
-    def updateAttack(cls, pNew, newID): #Update the logic matriz when the player attack
+    def updateAttack(cls, pNew, newID): #Update the logic matriz when the player attack        
         cls.__matrix[pNew[0]][pNew[1]] = newID
         return pNew, newID
+    
+    def updateBoats(cls, boatsTuple, newID):
+        for boat in boatsTuple:
+            cls.__matrix[boat[0]][boat[1]] = newID
+            print(cls.__matrix)
 
 class Turn(object): # Another singletone to modify and return the "Turn" value
     __instance = None
@@ -792,6 +834,7 @@ class BoatNumber(object): # Another singletone to modify and return the "BoatNum
         if cls.__instance is None:
             cls.__instance = super(BoatNumber, cls).__new__(cls)
             cls.__boatNumber = 1
+            cls.__randomBoatNumber = 1
         return cls.__instance
 
     def modifyBoatNumber(cls): 
@@ -799,16 +842,18 @@ class BoatNumber(object): # Another singletone to modify and return the "BoatNum
 
     def getBoatNumber(cls): # return the turn value
         return cls.__boatNumber
+    
+    def modifyRandomBoatNumber(cls):
+        cls.__randomBoatNumber += 1
+
+    def getRandomBoatNumber(cls):
+        return cls.__randomBoatNumber
 
 class Arrow: 
     def __init__(self):
         self.__x = 10
         self.__y = 1
         #self.__countBoat = 0
-        self.__RIGHT = False
-        self.__LEFT = False
-        self.__UP = False
-        self.__DOWN = False
         self.__check = ToCheck()
         self.__pcapMatrix = PcAttackPlayerMatrix()
         self.__boatNumber = BoatNumber()
@@ -830,10 +875,6 @@ class Arrow:
         self.__ID = 9.4
 
         if not self.__check.checkLimitLeftPcap(self.__x, self.__y):
-            self.__LEFT = True
-            self.__DOWN, self.__UP, self.__RIGHT = False, False, False
-            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
-
             self.__y -= 1
             return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -851,10 +892,6 @@ class Arrow:
         self.__ID = 9.3
 
         if not self.__check.checkLimitRightPcap(self.__x, self.__y):
-            self.__RIGHT = True
-            self.__DOWN, self.__UP, self.__LEFT = False, False, False
-            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
-
             self.__y += 1
             return self.__pcapMatrix.updatePosition((self.__x, oldY), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -872,10 +909,6 @@ class Arrow:
         self.__ID = 9.1
 
         if not self.__check.checkLimitUpPcap(self.__x, self.__y):
-            self.__UP = True
-            self.__DOWN, self.__RIGHT, self.__LEFT = False, False, False
-            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
-
             self.__x -= 1
             return self.__pcapMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -893,10 +926,6 @@ class Arrow:
         self.__ID = 9.2
 
         if not self.__check.checkLimitDownPcap(self.__x, self.__y):
-            self.__DOWN = True
-            self.__UP, self.__RIGHT, self.__LEFT = False, False, False
-            print(f'UP: {self.__UP}, DOWN: {self.__DOWN}, RIGHT: {self.__RIGHT}, LEFT: {self.__LEFT}')
-
             self.__x += 1
             return self.__pcapMatrix.updatePosition((oldX, self.__y), (self.__x, self.__y), self.__oldID, self.__ID)
         else:
@@ -1328,8 +1357,10 @@ class PcAttackPlayerMatrix(object): #TODO:
 class Computer: #TODO:
     def __init__(self):
         self.__pcapMatrix = PcAttackPlayerMatrix()
+        self.__papcMatrix = PlayerAttackPcMatrix()
         self.__check = ToCheck()
         self.__turn = Turn()
+        self.__randomBoatNumber = BoatNumber()
         self.__history = []
         self.__placeHistory = []
     
@@ -1376,57 +1407,184 @@ class Computer: #TODO:
                 self.__ID = 5 
             self.addHistory(self.__coords)
             self.__turn.setTurn(True)
-            print("coords: ", self.__coords, "History: ",self.__history)
             return self.__pcapMatrix.updateAttack(self.__coords, self.__ID)
         else:
             return self.attack()
 
-    def getPlaceCoord(self):
+    def getPlaceCoordRandom(self):
         self.__coords = self.generateCoords()
         return self.__coords
     
-    def getOrientationCoord(self):
+    def getOrientationValue(self):
         self.__orient = self.generateOrientation()
         return self.__orient
 
-    def placeBoats(self): #TODO: pensar como ejecutar esto diferentes veces, digamos hacerlo como en un ciclo, que pasa si no se cumple la condicion basicamente
+    def placeBoats(self):       
         self.__matrix = self.__pcapMatrix.getMatrix()
-        self.__randomBoat = RandomBoatNumber()
-        doNothing = (0,0,0)
-        if self.__randomBoat.getBoatNumber > 3:
-            return doNothing#TODO: CHECK THIS
+        self.__coords = self.getPlaceCoordRandom()
+        self.__orientation = self.getOrientationValue()
+        
+        #Limit conditions
+        __limitConditionUp = self.__check.checkLimitUpPapc(self.__coords[0], self.__coords[1])
+        __limitConditionRight = self.__check.checkLimitRightPapc(self.__coords[0], self.__coords[1])
+        __limitConditionDown = self.__check.checkLimitRightPapc(self.__coords[0], self.__coords[1])
+        __limitConditionLeft = self.__check.checkLimitLeftPapc(self.__coords[0], self.__coords[1])
 
-        if self.__randomBoat.getBoatNumber == 1:
-            self.__coords = self.getPlaceCoord()
+        __DoubleLimitConditionUp = self.__check.checkLimitUpTwoPapc(self.__coords[0], self.__coords[1])
+        __DoubleLimitConditionRight = self.__check.checkLimitRightTwoPapc(self.__coords[0], self.__coords[1])
+        __DoubleLimitConditionDown = self.__check.checkLimitDownTwoPapc(self.__coords[0], self.__coords[1])
+        __DoubleLimitConditionLeft = self.__check.checkLimitLeftTwoPapc(self.__coords[0], self.__coords[1])
+        
+        __TripleLimitConditionUp = self.__check.checkLimitUpThreePapc(self.__coords[0], self.__coords[1])
+        __TripleLimitConditionRight = self.__check.checkLimitRightThreePapc(self.__coords[0], self.__coords[1])
+        __TripleLimitConditionDown = self.__check.checkLimitDownThreePapc(self.__coords[0], self.__coords[1])
+        __TripleLimitConditionLeft = self.__check.checkLimitLeftThreePapc(self.__coords[0], self.__coords[1])
+        
+        #Boats conditions
+
+        __checkBoatUp = self.__check.checkBoatUpPapc(self.__coords[0], self.__coords[1])
+        __checkBoatRight  = self.__check.checkBoatRightPapc(self.__coords[0], self.__coords[1])
+        __checkBoatDown = self.__check.checkBoatDownPapc(self.__coords[0], self.__coords[1])
+        __checkBoatLeft = self.__check.checkBoatLeftPapc(self.__coords[0], self.__coords[1])
+
+        __DoubleCheckBoatUp = self.__check.checkBoatUpTwoPapc(self.__coords[0], self.__coords[1])
+        __DoubleCheckBoatRight = self.__check.checkBoatRightTwoPapc(self.__coords[0], self.__coords[1])
+        __DoubleCheckBoatDown = self.__check.checkBoatDownTwoPapc(self.__coords[0], self.__coords[1])
+        __DoubleCheckBoatLeft = self.__check.checkBoatLeftTwoPapc(self.__coords[0], self.__coords[1])
+        
+        __TripleCheckBoatUp = self.__check.checkBoatUpThreePapc(self.__coords[0], self.__coords[1])
+        __TripleCheckBoatRight = self.__check.checkBoatRightThreePapc(self.__coords[0], self.__coords[1])
+        __TripleCheckBoatDown = self.__check.checkBoatDownThreePapc(self.__coords[0], self.__coords[1])
+        __TripleCheckBoatLeft = self.__check.checkBoatLeftThreePapc(self.__coords[0], self.__coords[1])
+        
+        self.__ID = -1
+
+        if self.__randomBoatNumber.getBoatNumber() == 1:
             if not self.__check.checkPlaceCoordsDisp(self.__coords, self.__placeHistory):
-                if self.__orient == 1:#Up
-                    __limitCondition = self.__check.checkLimitUpPapc(self.__coords[0], self.__coords[1])
-                if not __limitCondition:
-                    pass
+                if self.__orientation == 1: #Up
+                    if not __limitConditionUp and not __checkBoatUp:
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        self.addPlaceHistory(self.__coords)
+                        coord1 = self.__coords[0] - 1, self.__coords[1]
+                        return self.__papcMatrix.updateBoats([coord1], self.__ID)
+                    else:
+                        self.placeBoats() 
+                        
+                elif self.__orientation == 2: #Right
+                    if not __limitConditionRight and not __checkBoatRight:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0], self.__coords[1] + 1
+                        return self.__papcMatrix.updateBoats([coord1], self.__ID)
+                    else:
+                        self.placeBoats() 
 
-                elif self.__orient == 2:#Right
-                    pass
-                elif self.__orient == 3: #Down
-                    pass
-                else:#Left
-                    pass
-            else:
-                return self.placeBoats()
+                elif self.__orientation == 3: #Down
+                    if not __limitConditionDown and not __checkBoatDown:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0] + 1, self.__coords[1]
+                        return self.__papcMatrix.updateBoats([coord1], self.__ID)
+                    else:
+                        self.placeBoats() 
 
-class RandomBoatNumber(object): 
-    __instance = None
-    def __new__(cls): 
-        if cls.__instance is None:
-            cls.__instance = super(RandomBoatNumber, cls).__new__(cls)
-            cls.__randomBoatNumber = 1
-        return cls.__instance
+                else: #Left
+                    if not __limitConditionLeft and not __checkBoatLeft:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0], self.__coords[1] - 1
+                        return self.__papcMatrix.updateBoats([coord1], self.__ID)
+                    else:
+                        self.placeBoats() 
 
-    def modifyBoatNumber(cls): 
-        cls.__randomBoatNumber += 1
+        if self.__randomBoatNumber.getBoatNumber() == 2:
+            if not self.__check.checkPlaceCoordsDisp(self.__coords, self.__placeHistory):
+                if self.__orientation == 1: #Up
+                    if not __limitConditionUp and not __DoubleLimitConditionUp and not __checkBoatUp and not __DoubleCheckBoatUp:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0] - 1, self.__coords[1]
+                        coord2 = self.__coords[0] - 2, self.__coords[1]
+                        return self.__papcMatrix.updateBoats([coord1, coord2], self.__ID)
+                    else:
+                        self.placeBoats() 
 
-    def getBoatNumber(cls): # return the turn value
-        return cls.__randomBoatNumber
+                elif self.__orientation == 2: #Right
+                    if not __limitConditionRight and not __DoubleLimitConditionRight and not __checkBoatRight and not __DoubleCheckBoatRight:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0], self.__coords[1] + 1
+                        coord2 = self.__coords[0], self.__coords[1] + 2
+                        return self.__papcMatrix.updateBoats([coord1, coord2], self.__ID)
+                    else:
+                        self.placeBoats() 
+                        
+                elif self.__orientation == 3: #Down
+                    if not __limitConditionDown and not __DoubleLimitConditionDown and not __checkBoatDown and not __DoubleCheckBoatDown:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0] + 1, self.__coords[1]
+                        coord2 = self.__coords[0] + 2, self.__coords[1]
+                        return self.__papcMatrix.updateBoats([coord1, coord2], self.__ID)   
+                    else:
+                        self.placeBoats() 
 
+                else: #Left
+                    if not __limitConditionLeft and not __DoubleLimitConditionLeft and not __checkBoatLeft and not __DoubleCheckBoatLeft:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0], self.__coords[1] - 1
+                        coord2 = self.__coords[0], self.__coords[1] - 2
+                        return self.__papcMatrix.updateBoats([coord1, coord2], self.__ID)
+                    else:
+                        self.placeBoats() 
+                        
+        if self.__randomBoatNumber.getBoatNumber() == 3:
+            if not self.__check.checkPlaceCoordsDisp(self.__coords, self.__placeHistory):
+                if self.__orientation == 1: #Up
+                    if not __limitConditionUp and not __DoubleLimitConditionUp and not __TripleLimitConditionUp and not __checkBoatUp and not __DoubleCheckBoatUp and not __TripleCheckBoatUp:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0] - 1, self.__coords[1]
+                        coord2 = self.__coords[0] - 2, self.__coords[1]
+                        coord3 = self.__coords[0] - 3, self.__coords[1]
+                        return self.__papcMatrix.updateBoats([coord1, coord2, coord3], self.__ID)
+                    else:
+                        self.placeBoats() 
+
+                elif self.__orientation == 2: #Right
+                    if not __limitConditionRight and not __DoubleLimitConditionRight and not __TripleLimitConditionRight and not __checkBoatRight and not __DoubleCheckBoatRight and not __TripleCheckBoatRight:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0], self.__coords[1] + 1 
+                        coord2 = self.__coords[0], self.__coords[1] + 2
+                        coord3 = self.__coords[0], self.__coords[1] + 3
+                        return self.__papcMatrix.updateBoats([coord1, coord2, coord3], self.__ID)
+                    else:
+                        self.placeBoats() 
+
+                elif self.__orientation == 3: #Down
+                    if not __limitConditionDown and not __DoubleLimitConditionDown and not __TripleLimitConditionDown and not __checkBoatDown and not __DoubleCheckBoatDown and not __TripleCheckBoatDown:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0] + 1, self.__coords[1]
+                        coord2 = self.__coords[0] + 2, self.__coords[1]
+                        coord3 = self.__coords[0] + 3, self.__coords[1]
+                        return self.__papcMatrix.updateBoats([coord1, coord2, coord3], self.__ID)
+                    else:
+                        self.placeBoats() 
+
+                else: #Left
+                    if not __limitConditionLeft and not __DoubleLimitConditionLeft and not __TripleLimitConditionLeft and not __checkBoatLeft and not __DoubleCheckBoatLeft and not __TripleCheckBoatLeft:
+                        self.addPlaceHistory(self.__coords)
+                        self.__randomBoatNumber.modifyRandomBoatNumber()
+                        coord1 = self.__coords[0], self.__coords[1] - 1
+                        coord2 = self.__coords[0], self.__coords[1] - 2
+                        coord3 = self.__coords[0], self.__coords[1] - 3
+                        return self.__papcMatrix.updateBoats([coord1, coord2, coord3], self.__ID)
+                    else:
+                        self.placeBoats() 
+                    
 class GameSetup: #funcion que sirve de intermediario para no crear un conflicto de instancias(dependecia circular)
     def __init__(self): #constructor
         self.__papcMatrix = PlayerAttackPcMatrix()
@@ -1436,6 +1594,7 @@ class GameSetup: #funcion que sirve de intermediario para no crear un conflicto 
         self.__pcapMatrix = PcAttackPlayerMatrix() 
         self.__computerAttack = Computer()
         self.__arrow = Arrow()
+        self.__boatNumber = BoatNumber()
 
     def getPapcMatrix(self): #funcion que sirve de medio para acceder a la clase playerAttackPcMatrix()
         return self.__papcMatrix
@@ -1457,3 +1616,6 @@ class GameSetup: #funcion que sirve de intermediario para no crear un conflicto 
     
     def getArrow(self):
         return self.__arrow
+    
+    def getBoatNumber(self):
+        return self.__boatNumber
