@@ -1,0 +1,28 @@
+"""
+##########################################################
+#                                                        #      
+#            Instituto Tecnológico de Costa Rica         #
+#          Área Académica de Ing. en Computadores        #
+#                                                        #
+#             Proyecto Programado Número dos             #
+#                                                        #
+#                       Estudiantes:                     #
+#          Yherland Elizondo Cordero - 2022289492        #
+#               Kun Kin Zheng Liang - 2022205015         #
+#                                                        #
+#       Taller de programación - Ing. en Computadores    #
+#                                                        #
+##########################################################
+"""
+
+-Versión de Python utilizada: 3.10
+
+-Para utilizar el programa se debe ejecutar el archivo: Y_Elizondo_Cordero_K_Zheng_Liang.py
+
+-Es necesario contar con Pygame instalado en el sistema para ejecutar el programa.
+ para instalarlo basta con escribir "pip install Pygame" en una línea de comandos, si este comando no 
+ funciona puede consultarlo en el siguiente link: https://www.pygame.org/wiki/GettingStarted.
+
+-Por último, para la ejecución del programa es necesario contar con el módulo tkinter, este puede ser instalado
+ mediante el comando: "pip install tk", en caso de no funcionar puede consultar en el siguiente link:
+ https://www.geeksforgeeks.org/how-to-install-tkinter-in-windows/.

@@ -1,10 +1,28 @@
-from shutil import move
+"""
+##########################################################
+#                                                        #      
+#            Instituto Tecnológico de Costa Rica         #
+#          Área Académica de Ing. en Computadores        #
+#                                                        #
+#             Proyecto Programado Número dos             #
+#                                                        #
+#                       Estudiantes:                     #
+#          Yherland Elizondo Cordero - 2022289492        #
+#               Kun Kin Zheng Liang - 2022205015         #
+#                                                        #
+#       Taller de programación - Ing. en Computadores    #
+#                                                        #
+##########################################################
+"""
+
 import tkinter as tk
 from tkinter import PhotoImage, messagebox
+from turtle import color
 import pygame, copy, random, json
 from lib.gameBoards import playerAtPc, pcAtPlayer
+from JsonManager import JsonManager
 
-#Constantes
+#constants
 BLACK = 'Black'
 WIDTH = 384
 HEIGHT = 384
@@ -79,10 +97,6 @@ class GraphicUserInterface(tk.Tk):
         about.add_command(label= "Save", command = self.__saveGame)  
         about.add_command(label= "Load", command = self.__loadGame) 
         menubar.add_cascade(label= "Game", menu= about) 
-        #hall of fame section
-        hallOfFame = tk.Menu(menubar, tearoff= 0)  
-        hallOfFame.add_command(label= "Go!", command = lambda : [self.showFrame(HallOfFame), self.__setupVictorySound()]) 
-        menubar.add_cascade(label= "Hall Of Fame", menu= hallOfFame) 
         #music section
         music = tk.Menu(menubar, tearoff=0)
         music.add_command(label="Play", command = self.__setupPlay)  
@@ -91,8 +105,10 @@ class GraphicUserInterface(tk.Tk):
         
         self.config(menu=menubar) 
 
-    def __saveGame(self):
+    def __saveGame(self): #function to save the game 
         messagebox.showinfo('Saving Game...',  'Your game has been saved!')
+
+        #saving the parameters on variables
         pcapMatrix = self.__gameSetup.getpcapMatrix().getMatrix()
         papcMatrix = self.__gameSetup.getPapcMatrix().getMatrix()
         turn = self.__gameSetup.getState().getTurn()
@@ -102,6 +118,7 @@ class GraphicUserInterface(tk.Tk):
         pcapMatrixMoves = self.__gameSetup.getState().getPcapMatrixMoves()
         name = self.__gameSetup.getState().getName()
 
+        #usign a dictionary to save all configurations
         gameConfig = {
             "pcapMatrix": pcapMatrix,
             "papcMatrix": papcMatrix, 
@@ -112,21 +129,25 @@ class GraphicUserInterface(tk.Tk):
             "pcapMatrixMoves": pcapMatrixMoves,
             "name": name
         }
+        #saving the dictionary on a json file
         with open("data/config.json", "w") as outfile:
             json.dump(gameConfig, outfile)
 
-    def __loadGame(self):
+    def __loadGame(self):#fucntion to load the game
         messagebox.showinfo('Loading...',  'Your game is ready!')
+
+        #load the content of the json file
         loadInfo = open("data/config.json")
         data = json.load(loadInfo)
 
+        #removing the plane of the matrix and initializing the coords in [6,0]
         papcMatrix = data["papcMatrix"] #this is for delete the plane image when the game charges, also, it's used to set the initial positition
         for fila in range(len(papcMatrix)):
             for columna in range(len(papcMatrix[0])):
                 if papcMatrix[fila][columna] == 4.3 or papcMatrix[fila][columna] == 4.1 or papcMatrix[fila][columna] == 4.2 or papcMatrix[fila][columna] == 4.4:
                    papcMatrix[fila][columna] = 0
         papcMatrix[6][0] = 4.3
-
+        #Loading all the parameters saved in our program
         self.__gameSetup.getPapcMatrix().loadMatrix(papcMatrix) 
         self.__gameSetup.getpcapMatrix().loadMatrix(data["pcapMatrix"])
         self.__gameSetup.getState().setTurn(data["turn"])
@@ -136,6 +157,7 @@ class GraphicUserInterface(tk.Tk):
         self.__gameSetup.getState().setDestroyedPapc(data["destroyedPapc"])
         self.__gameSetup.getState().setPcapMatrixMoves(data["pcapMatrixMoves"])
         self.__gameSetup.getState().setName(data["name"])
+        #changing the screen
         self.showFrame(GameScreen)
 
         
@@ -184,7 +206,7 @@ class MainMenu(tk.Frame):
         nameEntry.config(width=25)
         nameEntry.place(x=300, y=230)
     
-    def __saveUsername(self):
+    def __saveUsername(self):#function to save the name of the player 
         user = self.__userNameInput.get()
         self.__gameSetup.getState().setName(user)
         
@@ -220,28 +242,28 @@ class setupBoatScreen(tk.Frame):
         InsImg =  PhotoImage(file= "media/instructionsScreen.png")
         tk.Label(self.__infoCanvas, image= InsImg).place(x=0, y=0)
     
-    def __setupButton(self, controller):
+    def __setupButton(self, controller): #funtion to configure the Next button
         playButton = tk.Button(self.__infoCanvas, text="Next", font=(HELVETICA, 15, 'bold'), width=5, command= lambda : self.__playCommand(controller))
         playButton.place(x=310, y=340) 
 
-    def __playCommand(self, controller):
+    def __playCommand(self, controller): #this function execute the random boat placement 3 times, then save the matrix to refresh the screen.
         num = 0
         for execution in range(0,3):
             num += 1
-            self.__gameSetup.getComputer().placeBoats()
-        papcMatrixToSave = self.__gameSetup.getPapcMatrix().getMatrix()
-        self.__gameSetup.getPapcMatrix().loadMatrix(papcMatrixToSave)
+            self.__gameSetup.getComputer().placeBoats() #place the 3 random boats
+        papcMatrixToSave = self.__gameSetup.getPapcMatrix().getMatrix() #get the new matrix
+        self.__gameSetup.getPapcMatrix().loadMatrix(papcMatrixToSave) # save the new matrix
          
-        boatNumber =  self.__gameSetup.getBoatNumber().getBoatNumber()
-        matrixToSave = self.__gameSetup.getpcapMatrix().getMatrix()
+        boatNumber =  self.__gameSetup.getBoatNumber().getBoatNumber() # number of boats that have been placed
+        matrixToSave = self.__gameSetup.getpcapMatrix().getMatrix() # new matrix
 
-        if boatNumber >= 4:
+        if boatNumber >= 4: # check how many boat have been placed 
             self.__gameSetup.getpcapMatrix().loadMatrix(matrixToSave)
             controller.showFrame(GameScreen)
         else:
             messagebox.showinfo('Error', 'Please, place all boats')
 
-    def __setupLabel(self): #label configuration
+    def __setupLabel(self): #dinamic label configuration, this function update the label with the boar number
         boatNumber =  self.__gameSetup.getBoatNumber().getBoatNumber()
         if boatNumber == 1:
             self.__boat = tk.Label(self.__countBoatCanvas, text='1st Boat', font=(HELVETICA, 12), bg=BLACK, fg='white')
@@ -264,8 +286,8 @@ class setupBoatScreen(tk.Frame):
         movement = pMoveFunction()
         self.__updateVisualPcapMatrix(movement[0], movement[1], movement[2])
 
-    def __placeBoat(self, pSetFunction):#boat placement logic #TODO:hay que cambiar la logica de esta parte
-        place = pSetFunction() # returns (((x,y)...), id)
+    def __placeBoat(self, pSetFunction): #function to place the boats and update the visual matrix 
+        place = pSetFunction() 
         self.__updateVisualPcapMatrixPlaceBoat(place, place[2])
     
     def __updateVisualPcapMatrix(self, oldMovement, newMovement, exit): #Visual matrix update (used to show movements)
@@ -289,7 +311,7 @@ class setupBoatScreen(tk.Frame):
         self.__roadBoatHor = PhotoImage(file= "media/roadBoatHor.png")
         self.__roadBoatVer = PhotoImage(file= "media/roadBoatVert.png")
 
-    def __getImage(self, id): #Function that return an image using the ID
+    def __getImage(self, id): #Function that return an image using the ID(number in matrix)
         if id == 9.1:
             return self.__arrowUp
         elif id == 9.2:
@@ -316,21 +338,25 @@ class setupBoatScreen(tk.Frame):
 class GameScreen(tk.Frame):
     """Game Screen"""
     def __init__(self, parent, controller): #constructor
+        self.__jsonManager = JsonManager()
         tk.Frame.__init__(self, parent) #constructor 
         self.__gameSetup = GameSetup()
         self.__turn = Turn()
-        self.__initialScreen(controller)  
+        self.__initialScreen(controller) #Execute an intermediate screen (this allows screen updating and matrix)
+        self.__players = self.__refreshJson()
 
     def __initialScreen(self, controller):
         #Canva
         self.__initialCanva = tk.Canvas(self, width=768, height=384, bg="white")
         self.__initialCanva.place(x=0, y=0)
+
         #Background image
         global intImg
         intImg = PhotoImage(file= "media/InstructionsToPlay.png") 
         intLabel = tk.Label(self.__initialCanva, image = intImg)
         intLabel.place(x=0, y=0)
-        #Button
+
+        #Button, this button execute the init
         tk.Button(self, text="Start", font=(HELVETICA, 15, 'bold'), width=8, command= lambda : self.__initComponents(controller)).place(x=340, y=260)
         
     def __initComponents(self, controller): #widget calling
@@ -353,26 +379,24 @@ class GameScreen(tk.Frame):
         self.__countCanvas = tk.Canvas(self, width=122, height=30, bg=BLACK) 
         self.__countCanvas.place(x=323, y=0)
 
-    def __setupWaveSound(self): 
+    def __setupWaveSound(self): #Game Over sound
         pygame.mixer.quit()
         pygame.mixer.init()
         pygame.mixer.music.load("sound/waveSound.mp3")#Import Soundtrack
         pygame.mixer.music.play(loops=-1) #Play the song while the game is running
 
-    def __setupVictorySound(self):
+    def __setupVictorySound(self): #Victory sound
         pygame.mixer.quit()
         pygame.mixer.init()
         pygame.mixer.music.load("sound/victorySound.mp3")
         pygame.mixer.music.play()
 
-    def __labelMove(self):
+    def __labelMove(self): #label showing how many moves the player has made
         moves =  self.__gameSetup.getState().getMoves()
         self.__boat = tk.Label(self.__countCanvas, text=f'Moves: {moves}', font=(HELVETICA, 14, 'bold'), bg=BLACK, fg='white')
         self.__boat.place(x=13, y=3)
     
     def __setupKeyboardInput(self, controller): #Keyboard configuration
-                print(f"self.__turn.getDestroyedPapc(): {self.__turn.getDestroyedPapc()}")
-                print(f'self.__turn.getDestroyedPcap(): {self.__turn.getDestroyedPcap()}')
                 self.bind_all('<d>', lambda event: self.__move(self.__gameSetup.getPlane().moveRight, controller))
                 self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getPlane().moveUp, controller))
                 self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getPlane().moveDown, controller))
@@ -380,8 +404,8 @@ class GameScreen(tk.Frame):
                 self.bind_all('<j>', lambda event: self.__attack(self.__gameSetup.getPlane().attack, controller)) #Ejecutar el "disparo", ademas tiene que cambiar el estado de turno
 
     def __attack(self, pMoveFunction, controller): #Attack function
-        if self.__turn.getPcapMatrixMoves() < 100:
-            if self.__turn.getTurn():
+        if self.__turn.getPcapMatrixMoves() < 100: #limit to prevent the stack overflow
+            if self.__turn.getTurn(): #condition to use turns
                 if self.__turn.getDestroyedPapc() != 6: #Player wins
                     if self.__turn.getDestroyedPcap() != 6: # Computer wins
                         position = pMoveFunction()
@@ -393,7 +417,7 @@ class GameScreen(tk.Frame):
                         self.__setupWaveSound()
                 else:
                     messagebox.showinfo('WINNER', "Oh you win. I´ll beat you next time, you´ll see!!")
-                    self.updatedJson({"1":{ "name":self.__gameSetup.getState().getName(), "movements":self.__gameSetup.getState().getMoves()}})
+                    self.updatedJson({ "name":self.__gameSetup.getState().getName(), "movements":self.__gameSetup.getState().getMoves()})
                     controller.showFrame(HallOfFame)
                     self.__setupVictorySound()
             else:
@@ -406,8 +430,8 @@ class GameScreen(tk.Frame):
             self.__setupWaveSound()
 
     def __move(self, pMoveFunction, controller): #General move function, used to move the plane
-        if self.__turn.getPcapMatrixMoves() < 100:
-            if self.__turn.getTurn():
+        if self.__turn.getPcapMatrixMoves() < 100: #limit to prevent the stack overflow
+            if self.__turn.getTurn():#condition to use turns
                 if self.__turn.getDestroyedPapc() != 6: #Player wins
                     if self.__turn.getDestroyedPcap() != 6: # Computer wins
                         movement = pMoveFunction()
@@ -418,7 +442,7 @@ class GameScreen(tk.Frame):
                         self.__setupWaveSound()              
                 else:
                     messagebox.showinfo('WINNER', "Oh you win. I´ll beat you next time, you´ll see!!")
-                    self.updatedJson({"1":{ "name":self.__gameSetup.getState().getName(), "movements":self.__gameSetup.getState().getMoves()}})
+                    self.updatedJson({ "name":self.__gameSetup.getState().getName(), "movements":self.__gameSetup.getState().getMoves()})
                     controller.showFrame(HallOfFame)
                     self.__setupVictorySound()
         else:
@@ -426,47 +450,34 @@ class GameScreen(tk.Frame):
             controller.showFrame(GameOverScreen)
             self.__setupWaveSound()
 
-    def sortByMovement(pElement):
+    def sortByMovement(self, pElement):#TODO: QUEDA COMENTAR ESTA PARTE
         return pElement['movements']
     
-    def insert(self, pDict, pElement): #inster the name to the list, then sort the list
-        pList = []
-        for elem in pDict:
-            print("elem",elem)
-            pList.append(pDict[elem])
-        print(pList)
-        pList.append(pElement)
-        pList.sort(key=self.sortByMovement)
-        return pList
-
-    def setupJsonFile(self, value):
-        try: 
-            data = open("data/players.json")
-            self.__players = json.load(data)
-            return self.__players
-
-        except FileNotFoundError:
-            player = value
-            data = open("data/players.json", "w")
-            specialCase = json.dump(player, data)
-            self.__players = json.load(data)
-            return self.__players
+    def __insertPlayer(self, pDict, pElement): #inster the name to the list, then sort the list
+        pDict.append(pElement)
+        pDict.sort(key=self.sortByMovement)
+        return pDict
     
+    def __refreshJson(self):
+        self.__players = self.__jsonManager.readJson('data/players.json')['results']
+    
+    def __savePlayers(self):
+        self.__jsonManager.writeJson('data/players.json', {"results":self.__players})
+
     def updatedJson(self, value):
-        list = self.setupJsonFile(value)
-        print(f"lista: {list}")
-        updatedPlayers = self.insert(list, value)
-        with open("data/config.json", "w") as outfile:
-            json.dump(updatedPlayers, outfile)
+        self.__refreshJson()
+        self.__players = self.__insertPlayer(self.__players, value)
+        self.__savePlayers()
+        
 
     def __updateVisualPapcMatrix(self, oldMovement, newMovement, exit): # update visual matrix, used to move the plane in the visual matrix
-        if exit == 1: 
+        if exit == 1: #used to ignore some situations
             tk.Label(self.__gameCanvas, image=self.__getImage(oldMovement[1]), bg=BLACK).place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
             tk.Label(self.__gameCanvas, image=self.__getImage(newMovement[1]), bg=BLACK).place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
 
     def __updateVisualPapcMatrixAttack(self, position, exit):# update visual papcmatrix, used to show the attacks
-        if exit == 1: 
-            self.__labelMove()
+        if exit == 1: #used to ignore some situations
+            self.__labelMove()#update the move label
             tk.Label(self.__gameCanvas, image=self.__getImage(position[1]), bg=BLACK).place(x=position[0][1]*32,y=position[0][0]*32)
     
     def __updateVisualPcapMatrix(self, position): #update visual pcapmatrix, used to show the attacks
@@ -511,7 +522,7 @@ class GameScreen(tk.Frame):
         else:
             return self.__waterBlock
 
-    def __setupImagespapc(self): # Carga todas las imagenes visualmente #TODO: POR AQUI SE QUEDO COMENTANTO CODIGO
+    def __setupImagespapc(self): # Carga todas las imagenes visualmente 
         matrixpapc = self.__gameSetup.getPapcMatrix().getMatrix()
         for i in range(0,len(matrixpapc)):
             for j in range(0,len(matrixpapc[0])):
@@ -527,25 +538,71 @@ class GameScreen(tk.Frame):
 class HallOfFame(tk.Frame):
     """Hall of fame screen"""
     def __init__(self, parent, controller): #constructor
+        self.__players = []
         tk.Frame.__init__(self, parent) #constructor 
+        self.__jsonManager = JsonManager()
+        self.__players = self.__refreshJson()
         self.__initComponents()
+    
+    def __refreshJson(self):
+        self.__players = self.__jsonManager.readJson('data/players.json')['results']
+        return self.__players
 
     def __initComponents(self): #widget calling
         self.__setupCanvas()
         self.__setupBackground()
-        
+        self.__setupFameLabels()
+        self.__refreshButton()
+        self.__quitButton()
+
     def __setupCanvas(self): #canvas configuration
         """Canvas configuration"""
-        self.__hallOfFame = tk.Canvas(self, width=768, height=384, bg='blue')
+        self.__hallOfFame = tk.Canvas(self, width=768, height=384, bg='white')
         self.__hallOfFame.place(x=0, y=0)
 
     def __setupBackground(self):
         global bgOImg
-        bgOImg = PhotoImage(file= "media/hallOfFameBG.png") 
+        bgOImg = PhotoImage(file= "media/hallOfFame.png") 
         bgOImgLabel = tk.Label(self.__hallOfFame, image = bgOImg)
         bgOImgLabel.place(x=0, y=0)
 
-        
+    def __setupFameLabels(self):
+        pX = 205
+        pY = 112
+        cont = 0
+        for player in self.__players:
+            if cont > 4:
+                break
+            cont += 1
+            hallOfName = tk.Label(self.__hallOfFame, text= player["name"], bg="black", fg="white", font=(HELVETICA, 12, 'bold'))
+            hallOfName.place(x= pX, y= pY)
+
+            hallOfMoves = tk.Label(self.__hallOfFame, text= player["movements"], bg="black", fg="white", font=(HELVETICA, 12, 'bold'))
+            hallOfMoves.place(x= pX * 2.6, y= pY)
+                
+            pY += 37
+
+    def __refreshButton(self):
+        playButton = tk.Button(self, text="Refresh", font=(HELVETICA, 15, 'bold'), width=10, command= self.__refresh)
+        playButton.place(x=168, y=290)
+
+    def __quitButton(self):
+        quitButton = tk.Button(self, text="Quit", font=(HELVETICA, 15, 'bold'), width=10, command= self.__command)
+        quitButton.place(x=476, y=290)  
+
+    def __refresh(self):
+        self.__players = self.__jsonManager.readJson('data/players.json')['results']
+        self.__initComponents()
+
+    def __command(self):
+        time = 2
+        moves = 3
+        failures = 3
+        hits = 5
+        time = 2.3
+        messagebox.showinfo('Game Summary', f" Time played: {time} \n Moves: {moves} \n Failures: {failures} \n Hits: {hits}")
+        self.quit()
+
 class GameOverScreen(tk.Frame):
     """Game Over Screen"""
     def __init__(self, parent, controller): #constructor
