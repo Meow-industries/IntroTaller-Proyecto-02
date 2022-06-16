@@ -116,10 +116,15 @@ class GraphicUserInterface(tk.Tk):
         loadInfo = open("data/config.json")
         data = json.load(loadInfo)
 
-        
+        pcapMatrix = data["pcapMatrix"]
+        for fila in pcapMatrix:
+            for columna in fila:
+                if pcapMatrix[fila][columna] == 6:
+                   pcapMatrix[fila][columna] = 0
+        pcapMatrix[0][6] = 4.3
 
         self.__gameSetup.getPapcMatrix().loadMatrix(data["papcMatrix"]) 
-        self.__gameSetup.getpcapMatrix().loadMatrix(data["pcapMatrix"])
+        self.__gameSetup.getpcapMatrix().loadMatrix(pcapMatrix)
         self.__gameSetup.getState().setTurn(data["turn"])
         self.__gameSetup.getState().setMoves(data["moves"])
         self.__gameSetup.getState().setDestroyedPcap(data["destroyedPcap"])
