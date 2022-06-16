@@ -1,8 +1,6 @@
-from ast import Pass
-from inspect import getcoroutinestate
 import tkinter as tk
 from tkinter import PhotoImage, messagebox
-import pygame, copy, random
+import pygame, copy, random, json
 from lib.gameBoards import playerAtPc, pcAtPlayer
 
 #Constantes
@@ -22,7 +20,6 @@ class GraphicUserInterface(tk.Tk):
         #Widtet calling 
         self.__configureWindow() 
         self.__topMenu()
-        self.__setupMusic()
         self.__setupMatrix()
 
         # creating a container
@@ -33,7 +30,7 @@ class GraphicUserInterface(tk.Tk):
 
         self.frames = {} # creating an empty list to add the frames
 
-        for screenFrame in (MainMenu, setupBoatScreen, GameScreen): # movement through pages(Frames) 
+        for screenFrame in (MainMenu, setupBoatScreen, GameScreen, GameOverScreen, HallOfFame): # movement through pages(Frames) 
             frame = screenFrame(self.__container, self)
             self.frames[screenFrame] = frame #save the frame
             frame.grid(row = 0, column = 0, sticky ="nsew")
@@ -52,14 +49,15 @@ class GraphicUserInterface(tk.Tk):
         self.geometry("773x409+300+150")
         self.iconbitmap('media/icon.ico') #TODO: Revisar compatibilidad con mac
         self.resizable(False, False)
-
-    def __setupMusic(self): #Background music setup
-        pygame.mixer.init()#Starting pygame 
-        pygame.mixer.music.load("sound/menuTrack.mp3")#Import Soundtrack
-        pygame.mixer.music.play(loops=-1) #Play the song while the game is running
            
     def __setupPause(self): #Pause background music
         pygame.mixer.music.pause() #Pause the song 
+
+    def __setupVictorySound(self):
+        pygame.mixer.quit()
+        pygame.mixer.init()
+        pygame.mixer.music.load("sound/victorySound.mp3")
+        pygame.mixer.music.play()
 
     def __setupPlay(self):#Play background music
         pygame.mixer.music.play() #Play the song 
@@ -73,16 +71,16 @@ class GraphicUserInterface(tk.Tk):
         file = tk.Menu(menubar, tearoff=1, foreground=BLACK) 
         file.add_command(label= "About Developers",command = self.__aboutDevelopers)
         file.add_separator()  
-        file.add_command(label="Salir", command= self.quit)  
+        file.add_command(label="Exit", command= self.quit)  
         menubar.add_cascade(label="About Developers", menu= file)  
         #game section
         about = tk.Menu(menubar, tearoff= 0)  
-        about.add_command(label= "Save")  
+        about.add_command(label= "Save", command = self.__saveGAme)  
         about.add_command(label= "Load") 
         menubar.add_cascade(label= "Game", menu= about) 
         #hall of fame section
         hallOfFame = tk.Menu(menubar, tearoff= 0)  
-        hallOfFame.add_command(label= "Go!") 
+        hallOfFame.add_command(label= "Go!", command = lambda : [self.showFrame(HallOfFame), self.__setupVictorySound()]) 
         menubar.add_cascade(label= "Hall Of Fame", menu= hallOfFame) 
         #music section
         music = tk.Menu(menubar, tearoff=0)
@@ -92,6 +90,20 @@ class GraphicUserInterface(tk.Tk):
         
         self.config(menu=menubar) 
 
+    def __saveGAme(self):
+        messagebox.showinfo('Saving Game...',  'Your game has been saved!')
+        pcapMatrix = self.__gameSetup.getpcapMatrix().getMatrix()
+        papcMatrix = self.__gameSetup.getPapcMatrix().getMatrix()
+        turn = self.__gameSetup.getState().getTurn()
+        planeMoves = self.__gameSetup.getState().getMoves()
+        destroyedPcap = self.__gameSetup.getState().getDestroyedPcap()
+        destroyedPapc = self.__gameSetup.getState().getDestroyedPapc()
+
+        game = {
+            "pcapMatrix": pcapMatrix,
+            "papmMatrix": papcMatrix
+        }
+        
 class MainMenu(tk.Frame):
     """Main menu screen"""
     def __init__(self, parent, controller): #constructor
@@ -103,11 +115,17 @@ class MainMenu(tk.Frame):
         self.__setupBackground()
         self.__setupEntry()
         self.__setupButton(controller)
+        self.__setupMusic()
         self.__setupLabel()
         
     def __setupButton(self,controller): # Play button configuration
         playButton = tk.Button(self, text="Play", font=(HELVETICA, 15, 'bold'), width=10, command= lambda : controller.showFrame(setupBoatScreen))
         playButton.place(x=320, y=280)
+    
+    def __setupMusic(self): #Background music setup
+        pygame.mixer.init()#Starting pygame 
+        pygame.mixer.music.load("sound/menuTrack.mp3")#Import Soundtrack
+        pygame.mixer.music.play(loops=-1) #Play the song while the game is running
 
     def __setupCanvas(self): #Canva configuration
         self.__menuCanva = tk.Canvas(self, width=800, height=600, borderwidth=0)
@@ -173,10 +191,7 @@ class setupBoatScreen(tk.Frame):
             self.__gameSetup.getComputer().placeBoats()
         papcMatrixToSave = self.__gameSetup.getPapcMatrix().getMatrix()
         self.__gameSetup.getPapcMatrix().loadMatrix(papcMatrixToSave)
-
-        for row in papcMatrixToSave:
-            print(row)
-            
+         
         boatNumber =  self.__gameSetup.getBoatNumber().getBoatNumber()
         matrixToSave = self.__gameSetup.getpcapMatrix().getMatrix()
 
@@ -263,9 +278,9 @@ class GameScreen(tk.Frame):
         tk.Frame.__init__(self, parent) #constructor 
         self.__gameSetup = GameSetup()
         self.__turn = Turn()
-        self.__initialScreen()  
+        self.__initialScreen(controller)  
 
-    def __initialScreen(self):
+    def __initialScreen(self, controller):
         #Canva
         self.__initialCanva = tk.Canvas(self, width=768, height=384, bg="white")
         self.__initialCanva.place(x=0, y=0)
@@ -275,14 +290,14 @@ class GameScreen(tk.Frame):
         intLabel = tk.Label(self.__initialCanva, image = intImg)
         intLabel.place(x=0, y=0)
         #Button
-        tk.Button(self, text="Start", font=(HELVETICA, 15, 'bold'), width=8, command= lambda : self.__initComponents()).place(x=340, y=260)
+        tk.Button(self, text="Start", font=(HELVETICA, 15, 'bold'), width=8, command= lambda : self.__initComponents(controller)).place(x=340, y=260)
         
-    def __initComponents(self): #widget calling
+    def __initComponents(self, controller): #widget calling
         self.__setupCanvas()
         self.__setupImagesFiles()
         self.__setupImagespapc()
         self.__setupImagespcap()
-        self.__setupKeyboardInput()
+        self.__setupKeyboardInput(controller)
         self.__labelMove()
         
     def __setupCanvas(self): #canvas configuration
@@ -297,31 +312,76 @@ class GameScreen(tk.Frame):
         self.__countCanvas = tk.Canvas(self, width=122, height=30, bg=BLACK) 
         self.__countCanvas.place(x=323, y=0)
 
+    def __setupWaveSound(self): 
+        pygame.mixer.quit()
+        pygame.mixer.init()
+        pygame.mixer.music.load("sound/waveSound.mp3")#Import Soundtrack
+        pygame.mixer.music.play(loops=-1) #Play the song while the game is running
+
+    def __setupVictorySound(self):
+        pygame.mixer.quit()
+        pygame.mixer.init()
+        pygame.mixer.music.load("sound/victorySound.mp3")
+        pygame.mixer.music.play()
+
     def __labelMove(self):
         moves =  self.__gameSetup.getPlane().getMoves()
         self.__boat = tk.Label(self.__countCanvas, text=f'Moves: {moves}', font=(HELVETICA, 14, 'bold'), bg=BLACK, fg='white')
         self.__boat.place(x=13, y=3)
-     
-    def __setupKeyboardInput(self): #Keyboard configuration
-        self.bind_all('<d>', lambda event: self.__move(self.__gameSetup.getPlane().moveRight))
-        self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getPlane().moveUp))
-        self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getPlane().moveDown))
-        self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getPlane().moveLeft))
-        self.bind_all('<j>', lambda event: self.__attack(self.__gameSetup.getPlane().attack)) #Ejecutar el "disparo", ademas tiene que cambiar el estado de turno
+    
+    def __setupKeyboardInput(self, controller): #Keyboard configuration
+                print(f"self.__turn.getDestroyedPapc(): {self.__turn.getDestroyedPapc()}")
+                print(f'self.__turn.getDestroyedPcap(): {self.__turn.getDestroyedPcap()}')
+                self.bind_all('<d>', lambda event: self.__move(self.__gameSetup.getPlane().moveRight, controller))
+                self.bind_all('<w>', lambda event: self.__move(self.__gameSetup.getPlane().moveUp, controller))
+                self.bind_all('<s>', lambda event: self.__move(self.__gameSetup.getPlane().moveDown, controller))
+                self.bind_all('<a>', lambda event: self.__move(self.__gameSetup.getPlane().moveLeft, controller))
+                self.bind_all('<j>', lambda event: self.__attack(self.__gameSetup.getPlane().attack, controller)) #Ejecutar el "disparo", ademas tiene que cambiar el estado de turno
 
-    def __attack(self, pMoveFunction): #Attack function
-        if self.__turn.getTurn():
-            position = pMoveFunction()
-            self.__updateVisualPapcMatrixAttack(position)
+    def __attack(self, pMoveFunction, controller): #Attack function
+        if self.__turn.getPcapMatrixMoves() < 100:
+            if self.__turn.getTurn():
+                if self.__turn.getDestroyedPapc() != 6: #Player wins
+                    if self.__turn.getDestroyedPcap() != 6: # Computer wins
+                        position = pMoveFunction()
+                        self.__updateVisualPapcMatrixAttack(position)
+                    else:
+                        messagebox.showinfo('GAME OVER',  'You lose!')
+                        controller.showFrame(GameOverScreen)
+                        self.__setupWaveSound()
+                else:
+                    messagebox.showinfo('WINNER', "Oh you win. I´ll beat you next time, you´ll see!!")
+                    controller.showFrame(HallOfFame)
+                    self.__setupVictorySound()
+            else:
+                position = self.__gameSetup.getComputer().attack()
+                self.__updateVisualPcapMatrix(position)
         else:
-            position = self.__gameSetup.getComputer().attack()
-            self.__updateVisualPcapMatrix(position)
-
-    def __move(self, pMoveFunction): #General move function, used to move the plane
-        if self.__turn.getTurn():
-            movement = pMoveFunction()
-            self.__updateVisualPapcMatrix(movement[0], movement[1])
+            messagebox.showinfo('Error', 'Too much moves')
             
+            controller.showFrame(GameOverScreen)
+            self.__setupWaveSound()
+
+    def __move(self, pMoveFunction, controller): #General move function, used to move the plane
+        if self.__turn.getPcapMatrixMoves() < 100:
+            if self.__turn.getTurn():
+                if self.__turn.getDestroyedPapc() != 6: #Player wins
+                    if self.__turn.getDestroyedPcap() != 6: # Computer wins
+                        movement = pMoveFunction()
+                        self.__updateVisualPapcMatrix(movement[0], movement[1])
+                    else: 
+                        messagebox.showinfo('GAME OVER',  'You lose!')
+                        controller.showFrame(GameOverScreen)  
+                        self.__setupWaveSound()              
+                else:
+                    messagebox.showinfo('WINNER', "Oh you win. I´ll beat you next time, you´ll see!!")
+                    controller.showFrame(HallOfFame)
+                    self.__setupVictorySound()
+        else:
+            messagebox.showinfo('Error', 'Too much moves')
+            controller.showFrame(GameOverScreen)
+            self.__setupWaveSound()
+
     def __updateVisualPapcMatrix(self, oldMovement, newMovement): # update visual matrix, used to move the plane in the visual matrix
         tk.Label(self.__gameCanvas, image=self.__getImage(oldMovement[1]), bg=BLACK).place(x=oldMovement[0][1]*32,y=oldMovement[0][0]*32)
         tk.Label(self.__gameCanvas, image=self.__getImage(newMovement[1]), bg=BLACK).place(x=newMovement[0][1]*32,y=newMovement[0][0]*32)
@@ -385,6 +445,43 @@ class GameScreen(tk.Frame):
         for i in range(0,len(matrixpcap)):
             for j in range(0,len(matrixpcap[0])):
                 tk.Label(self.__boatsCanvas, image=self.__getImage(matrixpcap[i][j]), bg=BLACK).place(x=j*32,y=i*32)
+class HallOfFame(tk.Frame):
+    """Hall of fame screen"""
+    def __init__(self, parent, controller): #constructor
+        tk.Frame.__init__(self, parent) #constructor 
+        self.__initComponents()
+
+    def __initComponents(self): #widget calling
+        self.__setupCanvas()
+        
+    def __setupCanvas(self): #canvas configuration
+        """Canvas configuration"""
+        self.__hallOfFame = tk.Canvas(self, width=768, height=384, bg='blue')
+        self.__hallOfFame.place(x=0, y=0)
+        
+class GameOverScreen(tk.Frame):
+    """Game Over Screen"""
+    def __init__(self, parent, controller): #constructor
+        tk.Frame.__init__(self, parent) #constructor 
+        self.__initComponents()
+
+    def __initComponents(self): #widget calling
+        self.__setupCanvas()
+        self.__setupBackground()
+        self.__setupButton()
+    
+    def __setupCanvas(self):
+        self.__gameOverCanvas = tk.Canvas(self, width=768, height=384)
+        self.__gameOverCanvas.place(x=0, y=0)
+    
+    def __setupBackground(self):
+        global bgOImg
+        bgOImg = PhotoImage(file= "media/gameOverScreen.png") 
+        bgOImgLabel = tk.Label(self.__gameOverCanvas, image = bgOImg)
+        bgOImgLabel.place(x=0, y=0)
+
+    def __setupButton(self):
+        tk.Button(self, text="Exit", font=(HELVETICA, 15, 'bold'), width=8, command= self.quit).place(x=340, y=235)
 
 class ToCheck:
     def __init__(self):
@@ -807,9 +904,6 @@ class PlayerAttackPcMatrix(object):
     def updateBoats(cls, boatsTuple, newID):
         for boat in boatsTuple:
             cls.__matrix[boat[0]][boat[1]] = newID
-            for row in cls.__matrix:
-                print(row)
-            print("")
 
 class Turn(object): # Another singletone to modify and return the "Turn" value
     __instance = None
@@ -817,14 +911,42 @@ class Turn(object): # Another singletone to modify and return the "Turn" value
         if cls.__instance is None:
             cls.__instance = super(Turn, cls).__new__(cls)
             cls.__turn = True
+            cls.__destroyedPapc = 0
+            cls.__destroyedPcap = 0
+            cls.__pcapMatrixMoves = 0
+            cls.__moves = 0
         return cls.__instance
 
     def setTurn(cls, state): # turn modification 
         cls.__turn = state
 
+    def getMoves(cls):
+        return cls.__moves
+
+    def modifyMoves(cls):
+        cls.__moves += 1
+
     def getTurn(cls): # return the turn value
         return cls.__turn
+    
+    def getDestroyedPapc(cls):
+        return cls.__destroyedPapc
+    
+    def getDestroyedPcap(cls): 
+        return cls.__destroyedPcap
+    
+    def modifyDestroyedPapc(cls):
+        cls.__destroyedPapc += 1
 
+    def modifyDestroyedPcap(cls):
+        cls.__destroyedPcap += 1
+    
+    def getPcapMatrixMoves(cls):
+        return cls.__pcapMatrixMoves
+    
+    def modifyPcapMatrixMoves(cls):
+        cls.__pcapMatrixMoves += 1
+        
 class BoatNumber(object): # Another singletone to modify and return the "BoatNumber" value, this is used to place the boats, this class return the "type" of boats.
     __instance = None
     def __new__(cls): 
@@ -857,6 +979,7 @@ class Arrow:
         self.__ID = 9.3
     
     def __setupFxSound(self):
+        pygame.mixer.init()
         __constructionFx = pygame.mixer.Sound("sound/constructionSound.mp3")
         __constructionFx.play() 
     
@@ -1270,11 +1393,8 @@ class AtkPlane:
         self.__turn = Turn()
         self.__ID = 4.3
     
-    #def getCoords(self):
-    #return self.__x, self.__y
     def getMoves(self):
         return self.__moves
-
     def setupFxSound(self, fxID):
         if fxID == 1:
             __explotionFx = pygame.mixer.Sound("sound/explotionSound.mp3")
@@ -1297,7 +1417,8 @@ class AtkPlane:
             else:
                 self.__oldID = 0
                 self.__countX += 1
-
+        elif self.__check.checkBoatLeftPapc(self.__x, self.__y):
+                self.__oldID = -1
         else:
             if self.__countX != 0: 
                 self.__oldID = 5
@@ -1431,13 +1552,14 @@ class AtkPlane:
 
     def attack(self):
         self.__moves += 1 #Movement cont
-        print(f'self.__moves: {self.__moves}')
+        self.__turn.modifyMoves()
         if not self.__check.checkLimitUpPapc(self.__x, self.__y):
             if self.__ID == 4.1: #Player looks up
                 if self.__check.checkUpBoatPapc(self.__x, self.__y):  
                     self.__turn.setTurn(True)
                     newX = self.__x - 1
                     self.__ID = 3
+                    self.__turn.modifyDestroyedPapc()
                     self.setupFxSound(1)
                     return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
                 else:
@@ -1453,6 +1575,7 @@ class AtkPlane:
                     self.__turn.setTurn(True)
                     newX = self.__x + 1
                     self.__ID = 3
+                    self.__turn.modifyDestroyedPapc()
                     self.setupFxSound(1)
                     return self.__papcMatrix.updateAttack((newX, self.__y), self.__ID)
                 else:
@@ -1468,6 +1591,7 @@ class AtkPlane:
                     self.__turn.setTurn(True)
                     newY = self.__y + 1
                     self.__ID = 3
+                    self.__turn.modifyDestroyedPapc()
                     self.setupFxSound(1)
                     return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
                 else:
@@ -1484,6 +1608,7 @@ class AtkPlane:
                     newY = self.__y - 1
                     self.__ID = 3
                     self.setupFxSound(1)
+                    self.__turn.modifyDestroyedPapc()
                     return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
                 else:
                     self.__turn.setTurn(False)
@@ -1568,14 +1693,15 @@ class Computer: #TODO:
     def attack(self):
         self.__matrix = self.__pcapMatrix.getMatrix()
         self.__coords = self.generateCoords()
-
         if not self.__check.checkCoordDisp(self.__coords, self.__history):
             if self.__matrix[self.__x][self.__y] == 1.1 or self.__matrix[self.__x][self.__y] == 1.2:
+                self.__turn.modifyDestroyedPcap()
                 self.setupFxSound(1)
                 self.__ID = 3
             else:
                 self.setupFxSound(2)
                 self.__ID = 5 
+            self.__turn.modifyPcapMatrixMoves()
             self.addHistory(self.__coords)
             self.__turn.setTurn(True)
             return self.__pcapMatrix.updateAttack(self.__coords, self.__ID)
