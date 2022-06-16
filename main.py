@@ -76,8 +76,8 @@ class GraphicUserInterface(tk.Tk):
         menubar.add_cascade(label="About Developers", menu= file)  
         #game section
         about = tk.Menu(menubar, tearoff= 0)  
-        about.add_command(label= "Save", command = self.__saveGAme)  
-        about.add_command(label= "Load") 
+        about.add_command(label= "Save", command = self.__saveGame)  
+        about.add_command(label= "Load", command = self.__loadGame) 
         menubar.add_cascade(label= "Game", menu= about) 
         #hall of fame section
         hallOfFame = tk.Menu(menubar, tearoff= 0)  
@@ -91,7 +91,7 @@ class GraphicUserInterface(tk.Tk):
         
         self.config(menu=menubar) 
 
-    def __saveGAme(self):
+    def __saveGame(self):
         messagebox.showinfo('Saving Game...',  'Your game has been saved!')
         pcapMatrix = self.__gameSetup.getpcapMatrix().getMatrix()
         papcMatrix = self.__gameSetup.getPapcMatrix().getMatrix()
@@ -102,15 +102,30 @@ class GraphicUserInterface(tk.Tk):
 
         gameConfig = {
             "pcapMatrix": pcapMatrix,
-            "papmMatrix": papcMatrix, 
+            "papcMatrix": papcMatrix, 
             "turn": turn, 
-            "Moves": planeMoves,
+            "moves": planeMoves,
             "destroyedPcap": destroyedPcap, 
             "destroyedPapc": destroyedPapc
         }
-
         with open("data/config.json", "w") as outfile:
             json.dump(gameConfig, outfile)
+
+    def __loadGame(self):
+        messagebox.showinfo('Loading...',  'Your game is ready!')
+        loadInfo = open("data/config.json")
+        data = json.load(loadInfo)
+
+        
+
+        self.__gameSetup.getPapcMatrix().loadMatrix(data["papcMatrix"]) 
+        self.__gameSetup.getpcapMatrix().loadMatrix(data["pcapMatrix"])
+        self.__gameSetup.getState().setTurn(data["turn"])
+        self.__gameSetup.getState().setMoves(data["moves"])
+        self.__gameSetup.getState().setDestroyedPcap(data["destroyedPcap"])
+        self.__gameSetup.getState().setDestroyedPapc(data["destroyedPapc"])
+        self.showFrame(GameScreen)
+
         
 class MainMenu(tk.Frame):
     """Main menu screen"""
@@ -930,6 +945,9 @@ class Turn(object): # Another singletone to modify and return the "Turn" value
 
     def getMoves(cls):
         return cls.__moves
+    
+    def setMoves(cls, moves):
+        cls.__moves = moves
 
     def modifyMoves(cls):
         cls.__moves += 1
@@ -937,6 +955,15 @@ class Turn(object): # Another singletone to modify and return the "Turn" value
     def getTurn(cls): # return the turn value
         return cls.__turn
     
+    def setTurn(cls, turn):
+        cls.__turn = turn
+
+    def setDestroyedPapc(cls, destroyed):
+        cls.__destroyedPapc = destroyed
+    
+    def setDestroyedPcap(cls, destroyed):
+        cls.__destroyedPcap = destroyed
+
     def getDestroyedPapc(cls):
         return cls.__destroyedPapc
     
