@@ -1,3 +1,4 @@
+from shutil import move
 import tkinter as tk
 from tkinter import PhotoImage, messagebox
 import pygame, copy, random, json
@@ -99,10 +100,17 @@ class GraphicUserInterface(tk.Tk):
         destroyedPcap = self.__gameSetup.getState().getDestroyedPcap()
         destroyedPapc = self.__gameSetup.getState().getDestroyedPapc()
 
-        game = {
+        gameConfig = {
             "pcapMatrix": pcapMatrix,
-            "papmMatrix": papcMatrix
+            "papmMatrix": papcMatrix, 
+            "turn": turn, 
+            "Moves": planeMoves,
+            "destroyedPcap": destroyedPcap, 
+            "destroyedPapc": destroyedPapc
         }
+
+        with open("data/config.json", "w") as outfile:
+            json.dump(gameConfig, outfile)
         
 class MainMenu(tk.Frame):
     """Main menu screen"""
