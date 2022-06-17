@@ -17,7 +17,7 @@
 
 import tkinter as tk
 from tkinter import PhotoImage, messagebox
-import pygame, copy, random, json
+import pygame, copy, random, json, time
 from lib.gameBoards import playerAtPc, pcAtPlayer
 from JsonManager import JsonManager
 
@@ -66,7 +66,7 @@ class GraphicUserInterface(tk.Tk):
     def __configureWindow(self):#Funtion used to configure the main window
         self.title("BATTLESHIP")
         self.geometry("773x409+300+150")
-        self.iconbitmap('media/icon.ico') #TODO: Revisar compatibilidad con mac
+        self.iconbitmap('media/icon.ico') 
         self.resizable(False, False)
            
     def __setupPause(self): #function to pause the music
@@ -270,6 +270,7 @@ class setupBoatScreen(tk.Frame):
         if boatNumber >= 4: # check how many boat have been placed 
             self.__gameSetup.getpcapMatrix().loadMatrix(matrixToSave)
             controller.showFrame(GameScreen)
+            self.__gameSetup.getState().startTiem()
         else:
             messagebox.showinfo('Error', 'Please, place all boats')
 
@@ -460,6 +461,7 @@ class GameScreen(tk.Frame):
                 else:
                     messagebox.showinfo('WINNER', "Oh you win. I´ll beat you next time, you´ll see!!")
                     self.updatedJson({ "name":self.__gameSetup.getState().getName(), "movements":self.__gameSetup.getState().getMoves()})
+                    self.__gameSetup.getState().finishTime()
                     controller.showFrame(HallOfFame)
                     self.__setupVictorySound()
             else:
@@ -490,6 +492,7 @@ class GameScreen(tk.Frame):
                 else:
                     messagebox.showinfo('WINNER', "Oh you win. I´ll beat you next time, you´ll see!!")
                     self.updatedJson({ "name":self.__gameSetup.getState().getName(), "movements":self.__gameSetup.getState().getMoves()})
+                    self.__gameSetup.getState().finishTime()
                     controller.showFrame(HallOfFame)
                     self.__setupVictorySound()
         else:
@@ -588,8 +591,6 @@ class GameScreen(tk.Frame):
             return self.__planeLeft
         elif id == 5:
             return self.__missBlock
-        elif id == -1:
-            return self.__playerBoat
         elif id == 1.1:
             return self.__vertBoat
         elif id == 1.2:
@@ -616,6 +617,7 @@ class HallOfFame(tk.Frame):
         tk.Frame.__init__(self, parent) #constructor 
         self.__jsonManager = JsonManager()
         self.__players = self.__refreshJson()
+        self.__gameSetup = GameSetup()
         self.__initComponents()
     
     def __refreshJson(self): #this function its used to read the json file 
@@ -635,10 +637,10 @@ class HallOfFame(tk.Frame):
         self.__hallOfFame.place(x=0, y=0)
 
     def __setupBackground(self): #set the background of the hall of fame
-        global bgOImg
-        bgOImg = PhotoImage(file= "media/hallOfFame.png") 
-        bgOImgLabel = tk.Label(self.__hallOfFame, image = bgOImg)
-        bgOImgLabel.place(x=0, y=0)
+        global hallImg
+        hallImg = PhotoImage(file= "media/hallOfFame.png") 
+        hallImgLabel = tk.Label(self.__hallOfFame, image = hallImg)
+        hallImgLabel.place(x=0, y=0)
 
     def __setupFameLabels(self): # set the labels of the hall of fame (names and movements value)
         pX = 205
@@ -669,12 +671,11 @@ class HallOfFame(tk.Frame):
         self.__initComponents()
 
     def __command(self): #function to quit the window and show the summary of the game 
-        time = 2
-        moves = 3
-        failures = 3
-        hits = 5
-        time = 2.3
-        messagebox.showinfo('Game Summary', f" Time played: {time} \n Moves: {moves} \n Failures: {failures} \n Hits: {hits}")
+        time = round(self.__gameSetup.getState().measureTime(), 1)
+        moves = self.__gameSetup.getState().getMoves()
+        failures = self.__gameSetup.getState().getFails()
+        hits = self.__gameSetup.getState().getHits()
+        messagebox.showinfo('Game Summary', f" Time played: {round((time / 60), 1)} min \n Moves: {moves} \n Failures: {failures} \n Hits: {hits}")
         self.quit()
 
 class GameOverScreen(tk.Frame):
@@ -797,7 +798,7 @@ class ToCheck:
     def checkUpDebris(self, pX, pY):
         self.__x = pX
         self.__y = pY
-        return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == 3 #TODO:
+        return self.__papcMatrix.getMatrix()[self.__x - 1][self.__y] == 3
 
     def checkDownDebris(self, pX, pY):
         self.__x = pX
@@ -1030,7 +1031,7 @@ class ToCheck:
     def checkLimitLeftTwoPapc(self,pX, pY):
         self.__x = pX
         self.__y = pY
-        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 2] == 7 #TODO:
+        return self.__papcMatrix.getMatrix()[self.__x][self.__y - 2] == 7 
 
     def checkLimitUpThreePapc(self,pX, pY):
         self.__x = pX
@@ -1167,7 +1168,37 @@ class Turn(object):
             cls.__pcapMatrixMoves = 0
             cls.__moves = 0
             cls.__name = ""
+            cls.__initialTime = 0
+            cls.__finalTime = 0
+            cls.__hits = 0
+            cls.__fails = 0
         return cls.__instance
+
+    def modifyHits(cls):
+        print(f"cambio hits :{cls.__hits}")
+        cls.__hits += 1
+    
+    def modifyFails(cls):
+        print(f"cambio fails :{cls.__fails}")
+        cls.__fails += 1
+    
+    def getHits(cls):
+        print(f"return hists: {cls.__hits}")
+        return cls.__hits
+    
+    def getFails(cls):
+        print(f"return fails: {cls.__fails}")
+        return cls.__fails
+
+    def startTiem(cls): #start the time
+        cls.__initialTime = time.time()
+
+    def finishTime(cls): #finish the time
+        cls.__finalTime = time.time()
+
+    def measureTime(cls): #calculate the execution time, then return that result
+        gameTime = (cls.__finalTime - cls.__initialTime)
+        return gameTime
 
     def getName(cls): #return the name
         return cls.__name
@@ -2066,6 +2097,7 @@ class AtkPlane:
                 if self.__check.checkUpBoatPapc(self.__x, self.__y):  
                     self.__moves += 1
                     self.__turn.modifyMoves()
+                    self.__turn.modifyHits()
                     self.__turn.setTurn(True)
                     newX = self.__x - 1
                     self.__ID = 3
@@ -2077,6 +2109,7 @@ class AtkPlane:
                 else:
                     self.__moves += 1
                     self.__turn.modifyMoves()
+                    self.__turn.modifyFails()
                     self.__turn.setTurn(False)
                     newX = self.__x - 1
                     self.__ID = 5
@@ -2090,6 +2123,7 @@ class AtkPlane:
                 if self.__check.checkDownBoatPapc(self.__x, self.__y): 
                     self.__moves += 1
                     self.__turn.modifyMoves()
+                    self.__turn.modifyHits()
                     self.__turn.setTurn(True)
                     newX = self.__x + 1
                     self.__ID = 3
@@ -2101,6 +2135,7 @@ class AtkPlane:
                 else:
                     self.__moves += 1
                     self.__turn.modifyMoves()
+                    self.__turn.modifyFails()
                     self.__turn.setTurn(False)
                     newX = self.__x + 1
                     self.__ID = 5
@@ -2114,6 +2149,7 @@ class AtkPlane:
                 if self.__check.checkRightBoatPapc(self.__x, self.__y): #Player looks up
                     self.__moves += 1
                     self.__turn.modifyMoves()
+                    self.__turn.modifyHits()
                     self.__turn.setTurn(True)
                     newY = self.__y + 1
                     self.__ID = 3
@@ -2125,6 +2161,7 @@ class AtkPlane:
                 else:
                     self.__moves += 1
                     self.__turn.modifyMoves()
+                    self.__turn.modifyFails()
                     self.__turn.setTurn(False)
                     newY = self.__y + 1
                     self.__ID = 5
@@ -2143,6 +2180,7 @@ class AtkPlane:
                     self.__ID = 3
                     self.setupFxSound(1)
                     self.__turn.modifyDestroyedPapc()
+                    self.__turn.modifyHits()
                     return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
                 elif self.getCheckMissed(4) or self.getCheckDebris(4):
                     return (0, 0, 0)
@@ -2153,11 +2191,12 @@ class AtkPlane:
                     newY = self.__y - 1
                     self.__ID = 5
                     self.setupFxSound(0)
+                    self.__turn.modifyFails()
                     return self.__papcMatrix.updateAttack((self.__x, newY), self.__ID)
         else: 
             return (0, 0, 0)
 
-class PcAttackPlayerMatrix(object): #TODO:
+class PcAttackPlayerMatrix(object):
     __instance = None
 
     def __new__(cls): #Using a singletone to have an unique instance of this class
@@ -2190,7 +2229,7 @@ class PcAttackPlayerMatrix(object): #TODO:
         else:
             return pNewTuple, newID, 0
     
-class Computer: #TODO:
+class Computer:
     def __init__(self):
         self.__pcapMatrix = PcAttackPlayerMatrix()
         self.__papcMatrix = PlayerAttackPcMatrix()
