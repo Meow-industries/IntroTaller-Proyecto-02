@@ -30,7 +30,7 @@ HELVETICA = 'Helvetica'
 class GraphicUserInterface(tk.Tk):
     """Principal class"""
     
-    #part of a referenced code  #TODO: referenciar el codigo de los frames
+    #part of a referenced code 
     def __init__(self, *args, **kwargs):# constructor
          
         tk.Tk.__init__(self, *args, **kwargs)# constructor
@@ -500,6 +500,8 @@ class GameScreen(tk.Frame):
             controller.showFrame(GameOverScreen)
             self.__setupWaveSound()
 
+        for row in self.__gameSetup.getPapcMatrix().getMatrix():
+                print(row)
     def sortByMovement(self, pElement):
         """function that return the method to sort the list, in this case, we are interest in the "movements" key.
         e: pElement(element to insert)
@@ -594,6 +596,8 @@ class GameScreen(tk.Frame):
         elif id == 1.1:
             return self.__vertBoat
         elif id == 1.2:
+            return self.__horBoat
+        elif id == -1:
             return self.__horBoat
         else:
             return self.__waterBlock
@@ -1175,19 +1179,15 @@ class Turn(object):
         return cls.__instance
 
     def modifyHits(cls):
-        print(f"cambio hits :{cls.__hits}")
         cls.__hits += 1
     
     def modifyFails(cls):
-        print(f"cambio fails :{cls.__fails}")
         cls.__fails += 1
     
     def getHits(cls):
-        print(f"return hists: {cls.__hits}")
         return cls.__hits
     
     def getFails(cls):
-        print(f"return fails: {cls.__fails}")
         return cls.__fails
 
     def startTiem(cls): #start the time
